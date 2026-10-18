@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { Buffer } from 'node:buffer';
 
 const MAX_MEMBERS = 300;
 const MAX_BODY = 2048;

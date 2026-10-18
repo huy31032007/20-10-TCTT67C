@@ -13,7 +13,7 @@ npm start
 
 Sau đó mở http://127.0.0.1:2010. Máy chủ cục bộ lưu vườn thử nghiệm trong `data/garden.json` (không đưa lên bản build). Mở riêng `index.html` sẽ không có kết nối vườn chung.
 
-Đăng lên Netlify theo [NETLIFY.md](NETLIFY.md). Dự án có cả giao diện và chức năng lưu tên dùng chung, nên cần triển khai qua Git và quy trình build của Netlify.
+Đăng lên Netlify theo [NETLIFY.md](NETLIFY.md), hoặc Cloudflare Worker + D1 theo [CLOUDFLARE.md](CLOUDFLARE.md). Dự án có cả giao diện và chức năng lưu tên dùng chung; cần triển khai API cùng website. Netlify và Cloudflare dùng hai kho dữ liệu riêng.
 
 ## Hành trình
 
