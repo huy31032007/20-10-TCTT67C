@@ -1,0 +1,56 @@
+import { createServer } from 'node:http';
+import { readFile, writeFile, mkdir, rename, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { resolve, extname, dirname } from 'node:path';
+import { Readable } from 'node:stream';
+import { createGardenHandler } from './garden-handler.mjs';
+
+const root = fileURLToPath(new URL('../', import.meta.url));
+const dataFile = resolve(process.env.GARDEN_DATA_DIR || resolve(root, 'data'), 'garden.json');
+let writes = Promise.resolve();
+async function read() {
+  try {
+    const raw = await readFile(dataFile, 'utf8');
+    return { data: JSON.parse(raw), etag: createHash('sha256').update(raw).digest('hex') };
+  } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+}
+const store = { read, write(data, expected) {
+  const operation = writes.then(async () => {
+    const current = await read();
+    if ((current?.etag || null) !== expected) return false;
+    await mkdir(dirname(dataFile), { recursive: true });
+    const temp = `${dataFile}.tmp`;
+    await writeFile(temp, JSON.stringify(data), { mode: 0o600 });
+    await rename(temp, dataFile);
+    return true;
+  });
+  writes = operation.catch(() => {});
+  return operation;
+} };
+const garden = createGardenHandler(store);
+const staticFiles = new Set(['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js']);
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
+const host = process.env.HOST || '127.0.0.1';
+const port = Number(process.env.PORT || 2010);
+const server = createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    if (url.pathname === '/api/garden') {
+      const request = new Request(url, { method: req.method, headers: req.headers, ...(req.method !== 'GET' && req.method !== 'HEAD' ? { body: Readable.toWeb(req), duplex: 'half' } : {}) });
+      const result = await garden(request);
+      res.writeHead(result.status, Object.fromEntries(result.headers));
+      res.end(Buffer.from(await result.arrayBuffer()));
+      return;
+    }
+    if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return; }
+    const path = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
+    if (!staticFiles.has(path) && !/^(fonts|nhac)\/[a-zA-Z0-9_.-]+$/.test(path)) { res.writeHead(404); res.end('Not found'); return; }
+    const target = resolve(root, path);
+    if (!(await stat(target)).isFile()) throw Object.assign(new Error(), { code: 'ENOENT' });
+    const bytes = await readFile(target);
+    res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Content-Length': bytes.length, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    res.end(req.method === 'HEAD' ? undefined : bytes);
+  } catch (error) { res.writeHead(error.code === 'ENOENT' ? 404 : 500); res.end('Request failed'); }
+});
+server.listen(port, host, () => console.log(`Local preview: http://${host}:${server.address().port}`));

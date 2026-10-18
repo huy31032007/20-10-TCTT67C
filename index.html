@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ef">
+  <meta name="description" content="Thiệp 20/10 và vườn hoa chung của lớp. Nhập tên để thêm hoa vào vườn.">
+  <title>20/10 · Lớp mình</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="experience.css">
+  <link rel="stylesheet" href="garden.css">
+  <script src="flower-profiles.js" defer></script>
+  <script src="bouquet.js" defer></script>
+  <script src="script.js" defer></script>
+  <script src="garden.js" defer></script>
+</head>
+<body data-view="door">
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-star" viewBox="0 0 24 24"><path d="m12 2 2.8 6.2 6.7.8-5 4.7 1.4 6.8-5.9-3.4-5.9 3.4 1.4-6.8-5-4.7 6.7-.8Z"/></symbol>
+    <symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></symbol>
+    <symbol id="icon-sound" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+  </svg>
+
+  <div class="page-sparkles" aria-hidden="true"><span>✧</span><span>✦</span><span>✧</span><span>✳</span></div>
+  <header class="site-header">
+    <a class="wordmark" href="./" aria-label="Lớp mình, về đầu trang"><span class="brand-icon"><svg><use href="#icon-mail"/></svg></span>lớp mình<span class="brand-dot">.</span></a>
+    <div class="header-right"><span class="occasion">NGÀY PHỤ NỮ VIỆT NAM <b>20.10</b></span><button class="sound-button" id="soundButton" type="button" aria-label="Bật nhạc Photograph" aria-pressed="false"><svg><use href="#icon-sound"/></svg><span id="soundLabel">Bật nhạc</span></button></div>
+  </header>
+  <audio id="bgMusic" src="nhac/photograph.mp3" loop preload="metadata" hidden></audio>
+
+  <main id="app">
+    <nav class="journey" aria-label="Hành trình mở quà" hidden>
+      <ol id="progressSteps">
+        <li class="current" aria-current="step"><span class="step-dot">1</span><span>Nhập tên</span></li>
+        <li><span class="step-dot">2</span><span>Mở thiệp</span></li>
+      </ol>
+    </nav>
+
+    <section class="screen gate-screen" data-screen="door" aria-label="Cánh cửa đóng">
+      <div class="gate-scene" id="doorFrame">
+        <div class="gate-panel gate-panel-left" aria-hidden="true"><span class="gate-moulding moulding-top"></span><span class="gate-moulding moulding-bottom"></span></div>
+        <div class="gate-panel gate-panel-right" aria-hidden="true"><span class="gate-moulding moulding-top"></span><span class="gate-moulding moulding-bottom"></span></div>
+        <button class="gate-lock" id="openDoor" type="button" aria-label="Mở khóa để kết hoa và nhận thư 20 tháng 10"><svg viewBox="0 0 100 126" aria-hidden="true"><defs><linearGradient id="lockMetal" x1="0" x2="1" y2="1"><stop stop-color="#fff1b9"/><stop offset=".35" stop-color="#e8cb85"/><stop offset=".7" stop-color="#bd9651"/><stop offset="1" stop-color="#ead18f"/></linearGradient></defs><path class="lock-shackle" d="M24 51V30a26 26 0 0 1 52 0v21"/><rect class="lock-body" x="9" y="46" width="82" height="70" rx="16"/><rect class="lock-face" x="15" y="52" width="70" height="58" rx="12"/><circle class="lock-keyhole" cx="50" cy="78" r="8"/><path class="lock-keyhole" d="m46 82-3 16h14l-3-16Z"/><path class="lock-glint" d="M24 62h18"/></svg></button>
+      </div>
+    </section>
+
+    <section class="screen name-screen" data-screen="name" aria-labelledby="nameTitle" hidden inert>
+      <div class="name-atmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="name-stage">
+        <div id="nameBouquet" class="bouquet-art" aria-hidden="true"></div>
+        <p id="bouquetFor" class="live-name handwritten" aria-live="polite" hidden></p>
+      </div>
+      <div class="name-composer">
+        <h1 id="nameTitle" tabindex="-1">Nhập tên để góp một bông hoa</h1>
+        <p class="composer-subtitle">Mỗi chữ thêm một nhành hoa</p>
+        <form id="nameForm" novalidate>
+          <label class="sr-only" for="nameInput">Tên của bạn</label>
+          <div class="name-field"><input id="nameInput" name="name" type="text" placeholder="Tên của bạn" maxlength="30" autocomplete="given-name" spellcheck="false" aria-describedby="nameHelp nameError"></div>
+          <p class="input-error" id="nameError" role="status"></p>
+          <div class="flower-keyboard" id="flowerKeyboard" aria-label="Bàn phím kết hoa"></div>
+          <p class="keyboard-hint" id="nameHelp"><kbd>Enter</kbd> hoặc OK để xác nhận · Vườn hoa ở cuối hành trình</p>
+        </form>
+      </div>
+    </section>
+
+    <section class="screen envelope-screen" data-screen="envelope" aria-labelledby="envelopeTitle" hidden>
+      <button class="back-button" type="button" data-back="name">← Quay lại</button>
+      <p class="eyebrow"><span></span> THIỆP 20/10</p>
+      <h2 id="envelopeTitle" tabindex="-1">Thiệp 20/10<br><span data-personal-name class="handwritten"></span></h2>
+      <p class="intro">Hoàn thành rồi. Mở thiệp nhé.</p>
+      <button class="envelope-3d" id="envelope" type="button" aria-label="Mở phong bì lời chúc 20/10">
+        <span class="env-back"></span><span class="env-letter"><span>lớp mình.</span><b>20/10</b><small>Gửi các bạn nữ trong lớp ✿</small></span><span class="env-pocket"></span><span class="env-flap"></span><span class="env-seal">✿</span><span class="env-address">Gửi: <span data-personal-name></span></span>
+      </button>
+      <button class="button button-primary" id="openLetter" type="button">Mở thiệp <svg><use href="#icon-mail"/></svg></button>
+      <p class="little-note">20/10 · Lớp mình</p>
+      <p class="keyboard-shortcuts"><kbd>Enter</kbd> mở thư · <kbd>Esc</kbd> quay lại</p>
+    </section>
+
+    <section class="screen letter-screen" data-screen="letter" aria-labelledby="letterTitle" hidden>
+      <div class="letter-paper" id="letterCapture">
+        <div class="letter-content"><div class="letter-topline"><span>GỬI CẬU, TỪ LỚP MÌNH</span><span>20 / 10</span></div><p class="letter-kicker">Gửi các bạn nữ lớp mình,</p><h2 id="letterTitle" tabindex="-1">Chúc mừng<br><span class="handwritten">20/10!</span></h2><p class="letter-salutation">Gửi <strong data-personal-name></strong>,</p><div class="letter-body"><p>Chúc bạn ngày 20/10 vui vẻ, nhiều sức khỏe và học tập thuận lợi.</p><p>Chúc những bài kiểm tra sắp tới ổn áp, bài nhóm chạy đúng tiến độ và cả lớp có thêm nhiều kỷ niệm vui.</p><p>Hẹn gặp ở lớp!</p></div><div class="letter-sign"><span>Từ các bạn cùng lớp,</span><strong class="handwritten">Chúc mừng 20/10! <span>✳</span></strong></div></div>
+        <div class="letter-art"><span class="letter-date">20<span>tháng</span>10</span><div id="letterBouquet" class="bouquet-art" aria-hidden="true"></div><p class="handwritten">Một phần của<br>vườn hoa lớp mình.</p><span class="letter-art-star" aria-hidden="true">✦</span><span class="letter-postmark">CLASS<br><b>20/10</b><br>20 · 10</span></div>
+      </div>
+      <div class="letter-actions"><p><span>✧</span> Hoàn thành để góp hoa vào vườn chung của lớp.</p><div><button class="button button-primary" type="button" data-open-garden>Hoàn thành · Vào vườn lớp <span aria-hidden="true">✿</span></button><button class="button button-secondary" id="restartButton" type="button">Làm lại ↻</button><button class="button button-secondary" id="saveButton" type="button"><svg><use href="#icon-download"/></svg> Lưu thiệp về máy</button></div></div>
+    </section>
+
+    <section class="screen garden-screen" id="gardenScreen" data-screen="garden" aria-label="Vườn hoa chung của lớp" tabindex="-1" hidden>
+      <div class="garden-landscape" id="gardenLandscape">
+        <div class="garden-scenery" id="gardenScenery" aria-hidden="true"></div>
+        <div class="garden-plots" id="gardenPlots" role="list" aria-label="Những cụm hoa của các bạn trong lớp"></div>
+        <div class="garden-air" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="garden-controls">
+        <button class="garden-icon" id="gardenReturn" type="button" aria-label="Quay lại thiệp"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+        <button class="garden-icon" id="gardenSound" type="button" aria-label="Bật hoặc tắt nhạc"><svg viewBox="0 0 24 24"><use href="#icon-sound"/></svg></button>
+        <button class="garden-icon garden-retry" id="retryGardenJoin" type="button" aria-label="Thử kết nối lại vườn hoa" hidden><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.5 8a7 7 0 0 1 12-2L20 9M4 15l2.5 3a7 7 0 0 0 12-2"/></svg></button>
+      </div>
+      <p class="sr-only" id="gardenStatus" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer"><p><span>20/10 · Lớp mình</span></p><span class="footer-note">Vườn hoa chung <span aria-hidden="true">✳</span></span></footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div id="cursorStars" aria-hidden="true"></div>
+  <noscript><p class="noscript-message">Cậu hãy bật JavaScript để kết hoa và mở bức thư nhé.</p></noscript>
+</body>
+</html>
