@@ -147,3 +147,27 @@ Nguồn chính thức: [Workers Builds](https://developers.cloudflare.com/worker
 - npm run dev tự build và khởi tạo D1 local; API ban đầu trả revision 0 và members rỗng. Các URL package.json, server/garden-handler.mjs, wrangler.jsonc và .env trả 404 trên Worker local.
 - Đã mở hành trình cửa → nhập tên → thiệp → vườn trên local. Hai tab thử độc lập dùng cùng D1 local; tên thử không gửi lên production. Xem kết quả API và trạng thái tab trước khi báo hoàn tất.
 - Không thay schema, không chạy SQL trên database thật, không đổi quyền GitHub/Cloudflare và không deploy thủ công trong lượt sắp xếp cấu trúc. Chưa xác minh production.
+
+## Quản trị và xóa hoa thử
+
+Chức năng xóa dùng trang `/admin.html` và API riêng `/api/admin/garden` trên Cloudflare Worker. Backend kiểm tra mật khẩu cho cả tải danh sách quản trị và xóa; việc biết đường dẫn trang không cấp quyền xóa. API công khai `/api/garden` vẫn không chấp nhận DELETE. Backend Netlify hiện chưa có API quản trị này.
+
+Thiết lập một lần sau khi deploy code mới:
+
+1. Cloudflare → Workers & Pages → `20-10-tctt67c` → Settings → Variables and Secrets → Add.
+2. Type chọn **Secret**, Name điền **GARDEN_ADMIN_TOKEN**.
+3. Value dùng mật khẩu ngẫu nhiên riêng do bạn tạo bằng trình quản lý mật khẩu, dài ít nhất 32 ký tự (khuyến nghị 64 ký tự ngẫu nhiên). Giữ mật khẩu này riêng, không gửi cho lớp và không thêm vào GitHub.
+4. Lưu/Deploy thay đổi Secret theo dashboard. Đây là Secret runtime, không phải Build variable. Chưa có Secret hoặc dưới 32 ký tự thì API quản trị tự khóa, trả 503.
+5. Mở URL website thật rồi thêm `/admin.html`. Trên Cloudflare địa chỉ có thể được chuẩn hóa thành `/admin`. Nhập mật khẩu vừa đặt, bấm Mở quản trị.
+6. Chọn Xóa cạnh đúng tên, đọc tên trong hộp xác nhận rồi bấm Xóa cụm hoa. Hủy không làm thay đổi dữ liệu.
+7. Đăng xuất sau khi dùng xong. Mật khẩu chỉ giữ trong bộ nhớ của trang, gửi bằng Authorization header, không ghi vào URL, localStorage/sessionStorage hay dữ liệu người tham gia.
+
+Đây là khóa quản trị: ai có khóa đều có quyền quản trị, chưa có đăng nhập Google hoặc xác minh danh tính tài khoản. Người nhận link web bình thường không có khóa thì không xóa được. Để thu hồi khóa đã chia sẻ, đổi giá trị Secret.
+
+Mỗi lần xóa tăng revision và giữ các thành viên còn lại. Những màn vườn đang mở sẽ bỏ cụm hoa đó sau lượt đọc tiếp theo, khoảng 5 giây khi tab đang hoạt động. Xóa người cuối đưa vườn về cảnh trống. Người đã bị xóa vẫn có thể góp lại nếu tự hoàn thành thiệp lần nữa. Không có thao tác xóa toàn bộ hoặc nút hoàn tác trong trang quản trị.
+
+Không có mật khẩu production nào được đặt trong mã nguồn. Lượt triển khai tính năng chỉ kiểm tra dữ liệu local, không xóa hoa trên production và chưa cấu hình Secret thay bạn. Cần hoàn thành bước 1–4 để dùng trên website thật.
+
+Nguồn: [Cloudflare runtime secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
+
+Kiểm tra chức năng quản trị trên local: 15/15 tests qua; mật khẩu sai bị chặn; Hủy giữ nguyên danh sách; xác nhận xóa đúng một người; xóa cuối cùng trả vườn trống; đăng xuất/tải lại trang yêu cầu nhập mật khẩu mới. Vườn ở tab khác đã tự bỏ cụm vừa xóa. Giao diện được xác nhận ở viewport desktop 1280px; chưa xác nhận mobile vì công cụ đổi viewport vẫn trả kích thước 1280px. Không dùng khóa thật hoặc xóa dữ liệu production trong kiểm thử.

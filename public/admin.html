@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'">
+  <title>Quản lý vườn lớp</title>
+  <link rel="icon" href="favicon.svg">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><span class="eyebrow">20/10 · LỚP MÌNH</span><h1>Quản lý vườn lớp</h1><p>Xóa các cụm hoa thử trước khi gửi web cho lớp.</p></header>
+    <section class="card" id="loginPanel" aria-label="Đăng nhập quản trị">
+      <form id="loginForm">
+        <label for="adminPassword">Mật khẩu quản trị</label>
+        <input id="adminPassword" type="password" autocomplete="current-password" required maxlength="256" aria-describedby="passwordHelp">
+        <p class="help" id="passwordHelp">Dùng mật khẩu bạn đã đặt trong Secret GARDEN_ADMIN_TOKEN trên Cloudflare.</p>
+        <button type="submit">Mở quản trị</button>
+      </form>
+    </section>
+    <section class="card" id="managePanel" aria-label="Danh sách hoa" hidden>
+      <div class="toolbar"><h2 id="memberCount">Các cụm hoa</h2><div><button type="button" class="secondary" id="refreshMembers">Tải lại</button><button type="button" class="secondary" id="logout">Đăng xuất</button></div></div>
+      <p class="help">Xóa ở đây sẽ bỏ cụm hoa khỏi vườn của mọi người. Bạn đó vẫn có thể góp hoa lại khi hoàn thành thiệp lần nữa.</p>
+      <ul id="members"></ul>
+    </section>
+    <p id="adminStatus" role="status" aria-live="polite"></p>
+    <footer>Mật khẩu chỉ được giữ tạm trong trang này; tải lại trang hoặc đăng xuất để xóa khỏi phiên.</footer>
+  </main>
+  <dialog id="deleteDialog" aria-labelledby="deleteTitle">
+    <form method="dialog"><h2 id="deleteTitle">Xóa cụm hoa?</h2><p id="deleteDescription"></p><div class="dialog-actions"><button class="secondary" value="cancel">Hủy</button><button class="danger" value="confirm">Xóa cụm hoa</button></div></form>
+  </dialog>
+</body>
+</html>

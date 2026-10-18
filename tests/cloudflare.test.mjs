@@ -59,3 +59,18 @@ test('Worker serves assets separately and returns JSON for unknown API routes', 
   assert.match(unknown.headers.get('content-type'), /application\/json/);
   assert.equal(assetCalls, 1);
 });
+
+test('Cloudflare Worker connects admin authorization and deletion to D1', { skip: !DatabaseSync }, async t => {
+  const env = { GARDEN_DB: database(t), GARDEN_ADMIN_TOKEN: 'local-cloudflare-test-secret-not-for-production' };
+  const post = await worker.fetch(new Request('https://class.example/api/garden', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'An' })
+  }), env);
+  const { member } = await post.json();
+  const unauthorized = await worker.fetch(new Request('https://class.example/api/admin/garden'), env);
+  assert.equal(unauthorized.status, 401);
+  const removed = await worker.fetch(new Request('https://class.example/api/admin/garden', {
+    method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.GARDEN_ADMIN_TOKEN}` }, body: JSON.stringify({ id: member.id })
+  }), env);
+  assert.equal(removed.status, 200);
+  assert.deepEqual((await removed.json()).garden, { revision: 2, members: [] });
+});

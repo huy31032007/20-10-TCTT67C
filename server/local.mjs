@@ -30,16 +30,17 @@ const store = { read, write(data, expected) {
   return operation;
 } };
 const garden = createGardenHandler(store);
-const staticFiles = new Set(['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js']);
+const admin = createGardenHandler(store, { adminOnly: true, adminToken: process.env.GARDEN_ADMIN_TOKEN });
+const staticFiles = new Set(['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js', 'admin.html', 'admin.css', 'admin.js']);
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || 2010);
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    if (url.pathname === '/api/garden') {
+    if (url.pathname === '/api/garden' || url.pathname === '/api/admin/garden') {
       const request = new Request(url, { method: req.method, headers: req.headers, ...(req.method !== 'GET' && req.method !== 'HEAD' ? { body: Readable.toWeb(req), duplex: 'half' } : {}) });
-      const result = await garden(request);
+      const result = await (url.pathname === '/api/admin/garden' ? admin : garden)(request);
       res.writeHead(result.status, Object.fromEntries(result.headers));
       res.end(Buffer.from(await result.arrayBuffer()));
       return;

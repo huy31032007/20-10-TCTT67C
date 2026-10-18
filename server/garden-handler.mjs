@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 
 const MAX_MEMBERS = 300;
@@ -15,11 +15,22 @@ async function readGarden(store) {
   return saved;
 }
 
-export function createGardenHandler(store, { sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+export function createGardenHandler(store, { sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), adminOnly = false, adminToken } = {}) {
   return async function handle(request) {
     try {
+      if (adminOnly) {
+        if (typeof adminToken !== 'string' || adminToken.length < 32) {
+          return json({ error: 'Chưa bật quản trị. Hãy đặt Secret GARDEN_ADMIN_TOKEN dài ít nhất 32 ký tự trên Worker.' }, 503);
+        }
+        const supplied = request.headers.get('authorization') || '';
+        const digest = value => createHash('sha256').update(value).digest();
+        if (!timingSafeEqual(digest(supplied), digest(`Bearer ${adminToken}`))) {
+          return json({ error: 'Mật khẩu quản trị không đúng.' }, 401, { 'WWW-Authenticate': 'Bearer' });
+        }
+      }
       if (request.method === 'GET') return json((await readGarden(store)).data);
-      if (request.method !== 'POST') return json({ error: 'Phương thức không được hỗ trợ.' }, 405, { Allow: 'GET, POST' });
+      const writeMethod = adminOnly ? 'DELETE' : 'POST';
+      if (request.method !== writeMethod) return json({ error: 'Phương thức không được hỗ trợ.' }, 405, { Allow: `GET, ${writeMethod}` });
       const origin = request.headers.get('origin');
       if (origin && origin !== new URL(request.url).origin) return json({ error: 'Yêu cầu không hợp lệ.' }, 403);
       if (!request.headers.get('content-type')?.startsWith('application/json')) return json({ error: 'Dữ liệu không hợp lệ.' }, 415);
@@ -38,6 +49,18 @@ export function createGardenHandler(store, { sleep = ms => new Promise(resolve =
       let input;
       try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
       catch { return json({ error: 'Dữ liệu không hợp lệ.' }, 400); }
+      if (adminOnly) {
+        const id = typeof input?.id === 'string' ? input.id : '';
+        if (!/^[a-f0-9]{24}$/.test(id)) return json({ error: 'Cụm hoa không hợp lệ.' }, 400);
+        for (let attempt = 0; attempt < 16; attempt++) {
+          const { data, etag } = await readGarden(store);
+          if (!data.members.some(member => member.id === id)) return json({ error: 'Cụm hoa này đã được xóa hoặc không tồn tại.' }, 404);
+          const next = { revision: data.revision + 1, members: data.members.filter(member => member.id !== id) };
+          if (await store.write(next, etag)) return json({ deleted: id, garden: next });
+          await sleep(15 + Math.random() * Math.min(220, 25 * (attempt + 1)));
+        }
+        return json({ error: 'Vườn đang có nhiều thay đổi. Hãy thử xóa lại.' }, 503, { 'Retry-After': '2' });
+      }
       const name = typeof input?.name === 'string' ? canonicalName(input.name) : '';
       if (!name || name.length > 30 || !/^[\p{L}\p{M}\s.'’\-]+$/u.test(name) || !/\p{L}/u.test(name)) {
         return json({ error: 'Nhập tên bằng chữ, tối đa 30 ký tự.' }, 400);

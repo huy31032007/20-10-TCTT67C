@@ -82,6 +82,11 @@
     if (!Number.isSafeInteger(data?.revision) || !Array.isArray(data.members)) throw new Error('Vườn chưa kết nối được.');
     if (data.revision < revision) return;
     revision = data.revision; members = data.members;
+    const currentIds = new Set(members.map(member => member.id));
+    for (const [id, plant] of plants) {
+      if (currentIds.has(id)) continue;
+      hideName(plant); plant.remove(); plants.delete(id);
+    }
     for (const member of members) {
       if (plants.has(member.id)) continue;
       const plant = document.createElement('div');

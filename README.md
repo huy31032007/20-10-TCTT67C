@@ -98,3 +98,7 @@ Vườn chung cần mở qua máy chủ HTTP (`npm start`), không mở trực t
 Xem [FLOWER_GARDEN_NOTES.md](FLOWER_GARDEN_NOTES.md) để so sánh với ảnh tham chiếu, xem thử 30 bó, các nguồn tham khảo và giải thích đồng bộ/hosting. Hoa được vẽ SVG tại chỗ; không lấy ảnh ngoài lúc chạy. Có 13 dáng hoa, 12 nhóm phối và 8 bảng màu; cùng tên tạo cùng bó ở màn nhập tên và vườn. Mỗi cuống gom về gốc hẹp, không bọc giấy/nơ trong vườn.
 
 Bình thường hoa đung đưa nhẹ; hover trên máy có chuột, Enter/Space hoặc chạm sẽ rung rõ hơn. Điểm xoay ở gốc. `prefers-reduced-motion` tắt các animation này. Những kết quả kiểm tra ở tài liệu mới bổ sung cho lượt QA trước; chưa deploy bản thay đổi này.
+
+## Xóa hoa thử (chủ website)
+
+Sau khi đặt Secret runtime `GARDEN_ADMIN_TOKEN` trên Cloudflare, mở `/admin.html`, nhập mật khẩu và xóa từng hoa có xác nhận. Người không có mật khẩu bị backend từ chối. Hướng dẫn đầy đủ tại mục Quản trị trong [CLOUDFLARE.md](CLOUDFLARE.md). Mật khẩu không nằm trong code; API Netlify cũ chưa có chức năng quản trị.
