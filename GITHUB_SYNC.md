@@ -1,3 +1,5 @@
+> Nhật ký lần đưa code lên GitHub trước đây. Cấu trúc và cách deploy hiện tại xem [README.md](README.md) và [CLOUDFLARE.md](CLOUDFLARE.md); frontend nay ở public/.
+
 # GitHub và vườn hoa chung — 18/10/2026
 
 Repository đã fetch và xác minh: https://github.com/huy31032007/20-10-TCTT67C (nhánh main). Trước lượt cập nhật này repository chỉ có commit 2a611e1 và .gitattributes; chưa có website. Checkout local nằm ở `20/10 TCTT67C/` bên trong thư mục bản sửa; mã được chép vào gốc checkout bằng danh sách file cụ thể, không di chuyển/xóa bản gốc.

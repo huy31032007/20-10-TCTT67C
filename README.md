@@ -7,13 +7,28 @@ Web tặng các bạn nữ trong lớp, với nội dung ở mức tình bạn.
 Trong thư mục dự án, chạy:
 
 ```sh
-npm install
-npm start
+npm ci
+npm run dev
 ```
 
-Sau đó mở http://127.0.0.1:2010. Máy chủ cục bộ lưu vườn thử nghiệm trong `data/garden.json` (không đưa lên bản build). Mở riêng `index.html` sẽ không có kết nối vườn chung.
+Mở URL local mà Wrangler in ra. Lệnh tự build giao diện, tạo bảng D1 local rồi chạy Cloudflare Worker giả lập. Dữ liệu thử nằm trong `.wrangler/`, không gửi lên database thật. Để chạy server Node cũ, dùng `npm start` tại http://127.0.0.1:2010; dữ liệu riêng của server này nằm trong `data/`.
 
 Đăng lên Netlify theo [NETLIFY.md](NETLIFY.md), hoặc Cloudflare Worker + D1 theo [CLOUDFLARE.md](CLOUDFLARE.md). Dự án có cả giao diện và chức năng lưu tên dùng chung; cần triển khai API cùng website. Netlify và Cloudflare dùng hai kho dữ liệu riêng.
+
+## Cấu trúc mã nguồn
+
+```text
+public/                    Giao diện, hoa SVG, nhạc và font
+cloudflare/                Worker API, D1 store và schema
+server/                    Logic dùng chung và server Node local
+netlify/                   Backend Netlify tương thích
+tests/                    Kiểm tra dữ liệu, API và build
+wrangler.jsonc             Bản chính → class-garden
+wrangler.preview.jsonc     Bản thử → class-garden-preview
+build.mjs                  Chép tài nguyên từ public/ sang dist/
+```
+
+Làm theo [CLOUDFLARE.md](CLOUDFLARE.md) để đưa lên Cloudflare từ đầu. Lệnh `npm run deploy` tự build rồi deploy bản chính khi đã đăng nhập Cloudflare; không chạy lệnh này khi chỉ muốn thử local. `npm run check:cloudflare` chỉ kiểm tra đóng gói, không deploy.
 
 ## Hành trình
 
@@ -31,7 +46,7 @@ Photograph dùng đúng file từ `thu/nhac`, âm lượng 16%, tăng dần tron
 
 Web tự tạo hoa từ tên đầy đủ bằng mã băm có tính lặp lại: cùng tên sẽ cho cùng kiểu hoa, tên khác đổi cách phối loại hoa, màu, vị trí, giấy gói và nơ. Dấu tiếng Việt được giữ khi tính kiểu hoa. Chữ đầu các tên giống nhau có thể bắt đầu bằng nhành tương tự, những nhành sau và phần giấy gói được tạo riêng theo tên.
 
-Nếu muốn chỉ định hoa cho một bạn, chỉnh `flower-profiles.js`. Ví dụ:
+Nếu muốn chỉ định hoa cho một bạn, chỉnh `public/flower-profiles.js`. Ví dụ:
 
 ```js
 window.FLOWER_PROFILES = {
@@ -52,13 +67,13 @@ Loại hoa hỗ trợ: `mix`, `daisy`, `tulip`, `ranunculus`, `cosmos`, `rose`, 
 
 ## Chỉnh nội dung
 
-- Lời chúc chung: phần `letter-body` và `letter-sign` trong `index.html`.
-- Màu chủ đạo: các biến trong `:root` ở `styles.css`.
-- Hoa riêng theo người: `flower-profiles.js`.
-- Cửa toàn màn hình và landing page: `experience.css`.
-- Hình vẽ và mật độ hoa: `bouquet.js`. Minh họa SVG tự vẽ, không tải ảnh hoa bên ngoài khi chạy web.
-- Nhạc: `nhac/photograph.mp3`; âm lượng và thời gian vào nhạc trong `script.js`.
-- Bộ font: Be Vietnam Pro và Itim, phân phối theo SIL Open Font License; bản giấy phép đi kèm trong `fonts/`.
+- Lời chúc chung: phần `letter-body` và `letter-sign` trong `public/index.html`.
+- Màu chủ đạo: các biến trong `:root` ở `public/styles.css`.
+- Hoa riêng theo người: `public/flower-profiles.js`.
+- Cửa toàn màn hình và landing page: `public/experience.css`.
+- Hình vẽ và mật độ hoa: `public/bouquet.js`. Minh họa SVG tự vẽ, không tải ảnh hoa bên ngoài khi chạy web.
+- Nhạc: `public/nhac/photograph.mp3`; âm lượng và thời gian vào nhạc trong `public/script.js`.
+- Bộ font: Be Vietnam Pro và Itim, phân phối theo SIL Open Font License; bản giấy phép đi kèm trong `public/fonts/`.
 
 Phong bì lấy cảm hứng từ template `thu` của bạn. Bản này dùng minh họa SVG vẽ bằng code và nội dung dành cho bạn bè trong lớp.
 
@@ -66,7 +81,7 @@ Bố cục hoa tham khảo: [Delicate Daisy — Tulip bouquet](https://delicated
 
 ## Vườn chung và kiểm tra
 
-- Netlify Function tại `/api/garden` đọc/ghi dữ liệu bằng Netlify Blobs của chính website. Trình duyệt không chứa khóa quản trị.
+- Trên Cloudflare, Worker `/api/garden` đọc/ghi D1 dùng chung. Trên Netlify, Function cùng đường dẫn dùng Netlify Blobs. Trình duyệt không chứa khóa quản trị.
 - Hoa có cách phối riêng theo tên; mọi người xem cùng danh sách đã lưu. Khi nhiều bạn tham gia cùng lúc, cập nhật có kiểm tra phiên bản và thử lại để tránh mất tên.
 - Khi mất mạng, giao diện có biểu tượng thử lại và thông báo cho trình đọc màn hình; không báo tham gia thành công nếu máy chủ chưa lưu.
 - `npm test`: kiểm tra lưu/đọc giữa nhiều khách, tên trùng, cập nhật đồng thời, dữ liệu không hợp lệ và lưu qua lần khởi động lại.

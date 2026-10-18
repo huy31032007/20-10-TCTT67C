@@ -7,8 +7,13 @@
     "start": "node server/local.mjs",
     "build": "node build.mjs",
     "test": "node --test tests/*.test.mjs",
-    "dev:cloudflare": "wrangler dev --local",
-    "deploy:cloudflare": "wrangler deploy"
+    "dev": "npm run build && npm run db:local && wrangler dev --local --config wrangler.preview.jsonc",
+    "db:local": "wrangler d1 execute class-garden-preview --local --config wrangler.preview.jsonc --file cloudflare/schema.sql",
+    "check:cloudflare": "npm run build && wrangler deploy --dry-run --config wrangler.jsonc --outdir .wrangler/check",
+    "deploy": "npm run build && wrangler deploy --config wrangler.jsonc",
+    "deploy:preview": "npm run build && wrangler deploy --config wrangler.preview.jsonc",
+    "dev:cloudflare": "npm run dev",
+    "deploy:cloudflare": "npm run deploy"
   },
   "engines": {
     "node": ">=22"

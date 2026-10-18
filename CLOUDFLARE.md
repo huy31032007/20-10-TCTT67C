@@ -1,46 +1,149 @@
-# Cloudflare Worker + D1
+# Đưa website lên Cloudflare — hướng dẫn từ đầu
 
-Bản Cloudflare dùng Worker `20-10-tctt67c` đã được tạo trong tài khoản của chủ dự án, không phải Cloudflare Pages. Worker phục vụ giao diện từ `dist/` và xử lý API `/api/garden` với D1. Cấu hình được lưu trong `wrangler.jsonc`.
+Dùng **Cloudflare Workers + D1** cho repository [huy31032007/20-10-TCTT67C](https://github.com/huy31032007/20-10-TCTT67C). Đây là hướng dẫn chính cho cấu trúc code mới, thay cho hướng dẫn Pages trước đây.
 
-## Build và deploy
+## 1. Cấp quyền GitHub cho đúng repository
 
-- Build command trong Cloudflare: `npm run build`.
-- Deploy command: `npx wrangler deploy` (dùng phiên bản Wrangler đã khóa trong package-lock).
-- Root: gốc repository; Node 24.
-- `assets.directory` phải là `./dist`. Không đổi thành `.` vì sẽ lấy cả mã nguồn và node_modules làm tài nguyên công khai.
-- Entry point: `cloudflare/worker.mjs`.
-- `GARDEN_DB` dùng database D1 `class-garden` trên bản chính.
-- `cloudflare/schema.sql` là cấu trúc bảng cần khởi tạo một lần. Bảng trống tương ứng 0 người, không tự thêm tên mẫu.
+1. Đăng nhập GitHub bằng tài khoản `huy31032007`.
+2. Vào Settings → Applications → Installed GitHub Apps → Cloudflare Workers and Pages → Configure.
+3. Trong Repository access, giữ Only select repositories.
+4. Bấm Select repositories, tìm và chọn `20-10-TCTT67C`. Giữ nguyên các repository đã chọn khác.
+5. Bấm Save.
 
-Hai database D1 và bảng đã được tạo qua dashboard ngày 18/10/2026. ID trong cấu hình là định danh tài nguyên, không phải secret. Không cần đưa API token vào trình duyệt hay repository.
+Lượt kiểm tra trước thấy Cloudflare App chỉ được truy cập hai repository khác, chưa có repository website. Vì thế sửa code/push chưa đủ để Cloudflare tự build. Thao tác Save ở đây cấp quyền cho Cloudflare truy cập mã website. Không cần tạo API token rồi dán vào code.
 
-## Cơ chế vườn chung
+## 2. Dùng tài nguyên đã được tạo
 
-Khi người xem hoàn thành thiệp, frontend POST tên đến API cùng domain. Worker tái sử dụng logic kiểm tra tên, tên trùng và giới hạn 300 người. D1 lưu một tài liệu có revision; SQL chỉ ghi khi revision hiện tại khớp lượt đọc, tránh hai lượt tham gia ghi đè nhau. Các lượt cạnh tranh được logic chung thử lại.
+Trong đúng tài khoản Cloudflare đang có Worker:
 
-Mỗi request bắt đầu D1 session `first-primary` để đọc dữ liệu mới. Người đang ở màn vườn hỏi API lại khoảng 5 giây/lần, tab ẩn tạm ngưng, quay lại tab đọc mới. Đây chưa phải cập nhật đẩy tức thì hay danh sách đang online.
+| Tài nguyên | Tên |
+|---|---|
+| Worker chính | `20-10-tctt67c` |
+| Database thật | `class-garden` |
+| Database thử | `class-garden-preview` |
+| Bảng ở cả hai database | `garden_state` |
+| Binding trong code | `GARDEN_DB` |
 
-Tên và thời điểm tham gia được lưu trên D1 dùng chung, không dùng localStorage để giả lập đồng bộ. Tên hiện khi hover/chạm/focus vào bó hoa. Tên trùng sau chuẩn hóa là cùng một người, chưa có đăng nhập để phân biệt hai người có họ tên giống hệt.
+Các tài nguyên và bảng trên đã được tạo trong lượt thiết lập trước. ID database đã điền trong hai file cấu hình. Dùng lại chúng, không cần chạy SQL hay tạo lại database. Theo lựa chọn của chủ dự án, vườn Cloudflare bắt đầu mới, không nhập dữ liệu từ Netlify.
 
-## Kiểm thử
+Nếu dùng một tài khoản Cloudflare hoàn toàn khác: phải tạo hai D1 mới, chạy SQL trong `cloudflare/schema.sql` ở Console của từng database, rồi thay database_id trong hai file cấu hình. Đó là trường hợp khác với tài khoản hiện tại.
 
-Chạy `npm ci`, `npm test`, `npm run build`.
+## 3. Mở đúng Worker và kết nối repository
 
-Khởi tạo và chạy môi trường local riêng:
+Cloudflare Dashboard → Workers & Pages → chọn Worker `20-10-tctt67c` → Settings → Builds.
 
-```sh
-npx wrangler d1 execute class-garden --local --file=cloudflare/schema.sql
-npm run dev:cloudflare
+- Repository: `huy31032007/20-10-TCTT67C`.
+- Production branch: `main`.
+- Builds được bật (Disable builds = off).
+
+Nếu còn thông báo disconnected sau bước 1, tải lại dashboard. Nếu phải kết nối lại Git, chọn tài khoản `huy31032007` và đúng repository này. Dùng lại Worker hiện tại, không cần tạo project Pages hay một Worker khác.
+
+## 4. Điền cấu hình build
+
+| Trường trong Cloudflare | Giá trị |
+|---|---|
+| Build command | `npm run build` |
+| Deploy command | `npm run deploy` |
+| Root directory | `/` (gốc repository) |
+| Build variable | `NODE_VERSION` = `24` |
+
+Lưu nếu dashboard có nút Save. Lệnh deploy tự build trước khi gọi Wrangler; chạy lại build trong pipeline không làm thay đổi dữ liệu D1. Wrangler được khóa phiên bản trong package-lock.json.
+
+Giữ tên Worker là `20-10-tctt67c` để khớp cấu hình. Runtime binding D1 sẽ được deploy từ `wrangler.jsonc`, không cần dán khóa database vào frontend.
+
+## 5. Chạy build mới
+
+Vào Deployments → mở build lỗi → Retry build. Kiểm tra build đang dùng commit mới nhất của nhánh main trên GitHub.
+
+Dấu hiệu đúng trong log:
+
+- `Built static assets: .../dist/`.
+- Assets được đọc từ `dist`, không phải gốc repository.
+- Worker có binding `GARDEN_DB (class-garden)` và `ASSETS`.
+- Deploy kết thúc thành công; không chỉ build thành công.
+
+Nếu Git đã nối đúng, các lần push tiếp theo vào main có thể tự kích hoạt build theo cấu hình trên.
+
+## 6. Kiểm tra URL thật
+
+Mở URL workers.dev do Cloudflare hiển thị ở Worker. Trước tiên, kiểm tra website tải được, cửa phủ toàn màn hình và bấm khóa vào được màn tên.
+
+Mở thêm `/api/garden` trên cùng domain. Vườn mới chưa có người cần trả JSON:
+
+```json
+{"revision":0,"members":[]}
 ```
 
-Không thêm `--remote` khi thử tên. Dữ liệu mô phỏng trong `.wrangler/` được Git bỏ qua. Tests bổ sung thực thi SQL của adapter trên SQLite, kiểm tra ghi đua, tên trùng và định tuyến Worker. Kiểm thử tích hợp riêng đã dùng workerd/D1 local, 30 POST đồng thời trả 201, giữ đủ 30 tên và tên lặp trả 200 không thêm bó.
+Nếu đã có người tham gia thật, revision và members sẽ lớn hơn 0; không xóa dữ liệu chỉ để đưa về kết quả ví dụ.
 
-Môi trường `--env preview` cấu hình Worker riêng `20-10-tctt67c-preview` và database `class-garden-preview`. Chỉ khi chạy lệnh có `--env preview` thì kết nối này được dùng. Các version preview URL/branch build mặc định của Workers không tự được chuyển sang database thử chỉ vì có khối env này. Chưa coi môi trường remote preview đã deploy nếu không có URL kiểm chứng.
+Không nhập tên giả vào bản chính. Sau khi kiểm tra URL/API, gửi cùng một link Cloudflare cho lớp. Những lượt hoàn thành thiệp thật mới góp hoa vào D1. Tất cả người xem cùng domain sẽ nhận cùng danh sách; hover/chạm vào hoa hiện tên.
 
-Không nhập tên giả vào API production. Sau deploy chỉ GET để xác minh vườn; bài thử ghi ở local hoặc Worker preview dùng database riêng.
+## 7. Cơ chế đồng bộ
 
-## Dữ liệu Netlify
+Hoàn thành thiệp → POST `/api/garden` → Worker kiểm tra tên → lưu D1 → các màn vườn khác GET lại khoảng 5 giây/lần. Tab ẩn tạm ngừng hỏi; quay lại tab đọc mới. Đây là dữ liệu chung, không phải localStorage và chưa phải WebSocket hoặc danh sách đang online.
 
-Backend Netlify vẫn có sẵn, không bị xóa. Netlify Blobs và Cloudflare D1 là hai kho riêng. Push/deploy không tự chuyển dữ liệu giữa hai nơi; việc chuyển tên cũ cần được xác nhận riêng. D1 mới bắt đầu trống nếu chưa chuyển dữ liệu. Chỉ gửi một URL hosting thống nhất cho lớp sau khi chốt nơi sử dụng.
+D1 giữ một tài liệu có revision. Cập nhật SQL có điều kiện tránh ghi đè khi nhiều bạn góp hoa đồng thời; mỗi request đọc primary qua session. Tên giống nhau sau chuẩn hóa chỉ có một bó. Dữ liệu D1 không mất khi deploy lại code.
 
-Tài liệu: [Workers assets](https://developers.cloudflare.com/workers/static-assets/binding/), [D1 sessions](https://developers.cloudflare.com/d1/worker-api/d1-database/), [Node compatibility](https://developers.cloudflare.com/workers/runtime-apis/nodejs/).
+## 8. Thử trên máy mà không đụng dữ liệu thật
+
+Trong thư mục repository, dùng Node 24:
+
+```sh
+npm ci
+npm run dev
+```
+
+Lệnh này tự tạo dist, tự tạo bảng local nếu thiếu và chạy Worker giả lập. Mở URL local mà Wrangler in ra. Dữ liệu ở `.wrangler/` trên máy, được Git bỏ qua; không gửi tên thử lên D1 thật.
+
+Các lệnh khác:
+
+| Lệnh | Tác dụng |
+|---|---|
+| `npm test` | Kiểm tra lưu chung, tên trùng, SQL, build và cấu hình |
+| `npm run check:cloudflare` | Build và đóng gói thử, không deploy |
+| `npm start` | Server Node local dự phòng, dữ liệu trong data/ |
+| `npm run deploy` | Build và deploy Worker chính khi đã đăng nhập Wrangler |
+| `npm run deploy:preview` | Build và deploy Worker thử với database riêng |
+
+`wrangler.jsonc` chỉ dành cho bản chính. `wrangler.preview.jsonc` chỉ dành cho bản thử; không còn khối env preview trong cấu hình chính. Cấu hình riêng chỉ được dùng khi lệnh chọn file đó; version preview URL tự động của Workers không mặc nhiên dùng database thử.
+
+## 9. Khi gặp lỗi
+
+| Lỗi | Việc cần kiểm tra |
+|---|---|
+| Cloudflare disconnected / không thấy repo | Quyền GitHub App tại bước 1 và tài khoản Git đang nối |
+| Asset too large, có node_modules trong log | Build có dùng code mới và assets.directory = ./dist không? |
+| Worker name mismatch | Worker trên dashboard có tên 20-10-tctt67c không? |
+| Database không tồn tại / không có quyền | Đúng tài khoản Cloudflare và Database ID đã điền không? |
+| `/api/garden` trả HTML hoặc 404 | Đã deploy Worker mới hay chỉ tải file tĩnh? |
+| API trả 503, log no such table | Bảng garden_state có trong đúng D1 đang bind chưa? |
+| Nhập tên trên một link, link khác không thấy | Netlify và Cloudflare dùng hai kho riêng; cả lớp cần dùng cùng link |
+
+## 10. Cấu trúc mới
+
+```text
+public/                     HTML, CSS, JS, SVG, fonts, nhac
+cloudflare/worker.mjs        Entry point Worker và định tuyến API
+cloudflare/d1-store.mjs      Đọc/ghi D1 có kiểm tra revision
+cloudflare/schema.sql        Tạo bảng trống, không chứa tên mẫu
+server/garden-handler.mjs    Kiểm tra tên và logic vườn dùng chung
+server/local.mjs             Server Node dự phòng
+netlify/                    Backend Netlify cũ vẫn tương thích
+tests/                      Tests dữ liệu và deploy
+wrangler.jsonc              Cấu hình bản chính, D1 thật
+wrangler.preview.jsonc      Cấu hình bản thử, D1 riêng
+build.mjs                   Tạo dist chỉ từ frontend đã cho phép
+```
+
+File nhạc và hình hoa không bị đổi nội dung trong lượt sắp xếp cấu trúc này. Netlify Blobs cũ giữ nguyên, không chuyển tên cũ sang D1. Không có lệnh xóa database hoặc xóa người tham gia trong quy trình deploy.
+
+Nguồn chính thức: [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/), [Workers static assets](https://developers.cloudflare.com/workers/static-assets/binding/), [D1 sessions](https://developers.cloudflare.com/d1/worker-api/d1-database/).
+
+## Kết quả kiểm tra cấu trúc mới
+
+- 9/9 tests qua, gồm build giữ nguyên file frontend, không đưa backend/config vào dist, dữ liệu đồng thời và cấu hình D1 riêng cho hai môi trường.
+- Đối chiếu SHA-256 của 18 file frontend trước/sau chuyển vào public: nội dung không đổi.
+- npm run check:cloudflare đóng gói thành công, đọc assets từ dist, có binding class-garden; không còn cảnh báo nhiều môi trường trong một file.
+- npm run dev tự build và khởi tạo D1 local; API ban đầu trả revision 0 và members rỗng. Các URL package.json, server/garden-handler.mjs, wrangler.jsonc và .env trả 404 trên Worker local.
+- Đã mở hành trình cửa → nhập tên → thiệp → vườn trên local. Hai tab thử độc lập dùng cùng D1 local; tên thử không gửi lên production. Xem kết quả API và trạng thái tab trước khi báo hoàn tất.
+- Không thay schema, không chạy SQL trên database thật, không đổi quyền GitHub/Cloudflare và không deploy thủ công trong lượt sắp xếp cấu trúc. Chưa xác minh production.

@@ -7,6 +7,7 @@ import { Readable } from 'node:stream';
 import { createGardenHandler } from './garden-handler.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const publicRoot = resolve(root, 'public');
 const dataFile = resolve(process.env.GARDEN_DATA_DIR || resolve(root, 'data'), 'garden.json');
 let writes = Promise.resolve();
 async function read() {
@@ -46,7 +47,7 @@ const server = createServer(async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return; }
     const path = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
     if (!staticFiles.has(path) && !/^(fonts|nhac)\/[a-zA-Z0-9_.-]+$/.test(path)) { res.writeHead(404); res.end('Not found'); return; }
-    const target = resolve(root, path);
+    const target = resolve(publicRoot, path);
     if (!(await stat(target)).isFile()) throw Object.assign(new Error(), { code: 'ENOENT' });
     const bytes = await readFile(target);
     res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Content-Length': bytes.length, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });

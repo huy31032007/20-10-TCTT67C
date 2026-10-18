@@ -20,6 +20,11 @@ test('shared entries survive a full server restart; private storage is not serve
   let server;
   try {
     server=await start(directory);
+    const home=await fetch(server.url);
+    assert.equal(home.status,200);
+    assert.match(await home.text(),/id="openDoor"/);
+    assert.equal((await fetch(`${server.url}/garden.js`)).status,200);
+    assert.equal((await fetch(`${server.url}/server/garden-handler.mjs`)).status,404);
     const saved=await fetch(`${server.url}/api/garden`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Kiểm thử An'})});
     assert.equal(saved.status,201);
     assert.equal((await fetch(`${server.url}/data/garden.json`)).status,404);
