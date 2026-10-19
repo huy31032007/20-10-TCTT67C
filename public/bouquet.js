@@ -130,11 +130,15 @@
     const seed = hashName(normalizeName(name));
     return { seed, family: (seed >>> 11) % families.length, colorway: (seed >>> 3) % colorways.length };
   }
+  const keyFlowers = { G:4, R:4, V:4, K:6, L:6, Y:6 };
+  const letterKind = letter => keyFlowers[letter.normalize('NFD').replace(/\p{M}/gu, '').toUpperCase()];
   window.drawFlowerSprig = index => {
-    const kind = (index * 5) % 13, tone = (index + 1) % palette.length;
+    const kind = letterKind(String.fromCharCode(65 + index)) ?? (index * 5) % 13, tone = (index + 1) % palette.length;
     const colors = colorways[index % colorways.length].slice(), id = `sprig-${++serial}`;
     if (kind === 10) colors[tone] = '#a386c5';
     if (kind === 5) colors[tone] = '#efc04d';
+    if (kind === 4) colors[tone] = ['#dc7d9f','#eeae9b','#c56896'][index % 3];
+    if (kind === 6) colors[tone] = ['#fff8ec','#eeb2cc','#f3d69b'][index % 3];
     return `<svg viewBox="0 0 48 62" aria-hidden="true"><defs><radialGradient id="${id}-p${tone}"><stop stop-color="${mix(colors[tone],255,.4)}"/><stop offset="1" stop-color="${colors[tone]}"/></radialGradient><radialGradient id="${id}-gold"><stop stop-color="#ffe6a0"/><stop offset="1" stop-color="#cfa23e"/></radialGradient><g id="${id}-head">${bloom(kind,tone,id,colors)}</g></defs><path d="M24 59Q25 31 24 15M24 58Q15 39 12 29M24 58Q35 44 36 31" stroke="#86a379" stroke-width="1.1" fill="none"/><path d="M24 47Q13 45 13 38Q23 39 24 47M25 42Q35 38 36 33Q27 34 25 42" fill="#a5bc92"/><use href="#${id}-head" transform="translate(24 16) scale(.30)"/><use href="#${id}-head" transform="translate(12 30) scale(.20) rotate(-16)"/><use href="#${id}-head" transform="translate(36 31) scale(.19) rotate(15)"/></svg>`;
   };
 
@@ -175,7 +179,7 @@
       angle += ((branchSeed >>> 12)%17)-8;
       const tone = (branchSeed >>> 4) % colors.length;
       const family = families[theme.family];
-      const kind = selectedKind ?? family[branchSeed % 5 < 3 ? 0 : 1 + (branchSeed >>> 7) % 2];
+      const kind = selectedKind ?? letterKind(letter) ?? family[branchSeed % 5 < 3 ? 0 : 1 + (branchSeed >>> 7) % 2];
       const scale = .72 + (branchSeed % 5)*.045;
       const baseY = wrapped ? 375 : 455;
       const baseX = 224 + (i % 5) * 3;

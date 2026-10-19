@@ -4,7 +4,7 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const state = { name: '', screen: 'door', opening: false };
-const FLOW = ['door', 'name', 'envelope', 'letter', 'garden'];
+const FLOW = ['door', 'name', 'album', 'envelope', 'letter', 'garden'];
 const FLOWER_COLORS = ['#fffdf5', '#bca4d9', '#f2c76b', '#e9b7a5', '#f8f4e4', '#c6b2df', '#d6a6b0', '#e8bf6d'];
 let toastTimer;
 let openTimer;
@@ -220,6 +220,7 @@ document.addEventListener('keydown', event => {
       event.isComposing || event.keyCode === 229) return;
 
   const target = event.target instanceof Element ? event.target : null;
+  if (target?.closest('dialog[open]')) return;
   const isEditable = target?.closest('input, textarea, select, [contenteditable="true"]');
   if (state.screen === 'name' && nameWrapping) { event.preventDefault(); return; }
   if (state.screen === 'name') {
@@ -280,7 +281,7 @@ $('#nameForm').addEventListener('submit', event => {
   $('.name-screen').classList.add('is-wrapping');
   $('#nameInput').disabled = true;
   $$('#flowerKeyboard button').forEach(button => { button.disabled = true; });
-  nameWrapTimer = setTimeout(() => goTo('envelope'), reducedMotion.matches ? 50 : 850);
+  nameWrapTimer = setTimeout(() => goTo('album'), reducedMotion.matches ? 50 : 850);
 });
 
 function goTo(screen) {
@@ -290,7 +291,7 @@ function goTo(screen) {
   activeScreen.hidden = true;
   activeScreen = $(`.screen[data-screen="${screen}"]`);
   activeScreen.hidden = false;
-  $('.journey').hidden = screen === 'door' || screen === 'name' || screen === 'garden';
+  $('.journey').hidden = ['door', 'name', 'album', 'garden'].includes(screen);
   $('.name-screen').inert = screen !== 'name';
   const stepIndex = Math.max(0, Math.min(FLOW.indexOf(screen) - 1, 1));
   if (screen === 'door') {
@@ -336,17 +337,75 @@ $$('[data-back]').forEach(button => button.addEventListener('click', () => {
   goTo(button.dataset.back);
 }));
 
-function openLetter() {
+let letterVisitor;
+try { letterVisitor = localStorage.getItem('tctt67c-letter-visitor-v1'); } catch {}
+if (!/^[a-f0-9]{32}$/.test(letterVisitor || '')) {
+  letterVisitor = crypto.randomUUID().replaceAll('-', '');
+  try { localStorage.setItem('tctt67c-letter-visitor-v1', letterVisitor); } catch {}
+}
+let currentLetter = null, confirmingLetter = false;
+async function letterRequest(action, record) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
+  try {
+    const canonical = state.name.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi');
+    const visitor = record?.visitor || [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${letterVisitor}:${canonical}`)))].map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+    const response = await fetch('/api/letter', {
+      method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, visitor, ...(record ? { id: record.letter.id, cycle: record.cycle } : {}) })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Chưa lấy được thư. Cậu thử lại nhé.');
+    return { ...data, visitor };
+  } finally { clearTimeout(timer); }
+}
+async function confirmLetter() {
+  if (!currentLetter || confirmingLetter) return;
+  const record = currentLetter;
+  confirmingLetter = true; $('#retryLetter').disabled = true;
+  try {
+    await letterRequest('open', record);
+    if (currentLetter === record) { $('#letterStatus').textContent = ''; $('#retryLetter').hidden = true; }
+  } catch (error) {
+    if (currentLetter === record) {
+      $('#letterStatus').textContent = error.name === 'AbortError' ? 'Chưa ghi nhận được lượt mở. Cậu thử lại khi có mạng nhé.' : error.message;
+      $('#retryLetter').hidden = false;
+    }
+  } finally { confirmingLetter = false; $('#retryLetter').disabled = false; }
+}
+$('#retryLetter').addEventListener('click', confirmLetter);
+async function openLetter() {
   if (state.opening) return;
   state.opening = true;
-  $('#envelope').classList.add('open');
   $('#envelope').disabled = true;
   $('#openLetter').disabled = true;
-
-  openTimer = setTimeout(() => {
-    goTo('letter');
-    burst(window.innerWidth / 2, window.innerHeight * .4, 40);
-  }, reducedMotion.matches ? 50 : 1100);
+  $('#envelopeStatus').textContent = 'Đang lấy một bức thư…';
+  try {
+    const record = await letterRequest('reserve');
+    if (state.screen !== 'envelope') return;
+    currentLetter = record;
+    $('#letterBody').replaceChildren(...record.letter.paragraphs.map(text => {
+      const p = document.createElement('p'); p.textContent = text; return p;
+    }));
+    $('#letterSignature').textContent = record.letter.signature;
+    $('#letterStatus').textContent = ''; $('#retryLetter').hidden = true;
+    $('#envelopeStatus').textContent = '';
+    $('#envelope').classList.add('open');
+    window.ClassroomEffects?.paper('envelope');
+    window.ClassroomEffects?.letterPetals();
+    openTimer = setTimeout(() => {
+      goTo('letter');
+      // Confirm after the card is visible, not while browsing the album.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (state.screen === 'letter' && currentLetter === record) confirmLetter();
+      }));
+    }, reducedMotion.matches ? 50 : 1100);
+  } catch (error) {
+    if (state.screen === 'envelope') {
+      $('#envelopeStatus').textContent = error.name === 'AbortError' ? 'Kết nối hơi lâu. Cậu bấm mở thư để thử lại nhé.' : error.message;
+      state.opening = false; $('#envelope').disabled = false; $('#openLetter').disabled = false;
+    }
+  }
 }
 $('#envelope').addEventListener('click', openLetter);
 $('#openLetter').addEventListener('click', openLetter);
@@ -392,22 +451,6 @@ document.addEventListener('pointermove', event => {
 document.addEventListener('pointerdown', event => {
   if (state.screen !== 'door' && event.pointerType === 'touch') cursorSparkle(event.clientX, event.clientY);
 }, { passive: true });
-
-function burst(x, y, count) {
-  if (reducedMotion.matches) return;
-  for (let i = 0; i < count; i++) {
-    const particle = document.createElement('i');
-    particle.className = 'celebration-bit';
-    particle.style.setProperty('--x', `${x}px`);
-    particle.style.setProperty('--y', `${y}px`);
-    particle.style.setProperty('--color', trailColors[i % trailColors.length]);
-    particle.style.setProperty('--tx', `${(Math.random() - .5) * (count > 20 ? 680 : 200)}px`);
-    particle.style.setProperty('--ty', `${(Math.random() - .3) * 320}px`);
-    particle.style.setProperty('--rotation', `${Math.random() * 720}deg`);
-    document.body.appendChild(particle);
-    setTimeout(() => particle.remove(), 1500);
-  }
-}
 
 // Photograph starts inside the opening click so browsers permit playback.
 const backgroundMusic = $('#bgMusic');

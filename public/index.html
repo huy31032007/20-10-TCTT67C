@@ -10,10 +10,15 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="experience.css">
   <link rel="stylesheet" href="garden.css">
+  <link rel="stylesheet" href="album.css">
+  <link rel="stylesheet" href="interactions.css">
   <script src="flower-profiles.js" defer></script>
   <script src="bouquet.js" defer></script>
+  <script src="effects.js" defer></script>
   <script src="script.js" defer></script>
   <script src="garden.js" defer></script>
+  <script src="album-data.js" defer></script>
+  <script src="album.js" defer></script>
 </head>
 <body data-view="door">
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -66,8 +71,13 @@
       </div>
     </section>
 
+    <section class="screen album-screen" data-screen="album" aria-labelledby="albumTitle" hidden>
+      <h2 class="sr-only" id="albumTitle" tabindex="-1">Sổ ảnh kỷ niệm TCTT67C</h2>
+      <div id="albumRoot"></div>
+    </section>
+
     <section class="screen envelope-screen" data-screen="envelope" aria-labelledby="envelopeTitle" hidden>
-      <button class="back-button" type="button" data-back="name">← Quay lại</button>
+      <button class="back-button" type="button" data-back="album">← Sổ ảnh</button>
       <p class="eyebrow"><span></span> THIỆP 20/10</p>
       <h2 id="envelopeTitle" tabindex="-1">Thiệp 20/10<br><span data-personal-name class="handwritten"></span></h2>
       <p class="intro">Hoàn thành rồi. Mở thiệp nhé.</p>
@@ -75,16 +85,18 @@
         <span class="env-back"></span><span class="env-letter"><span>lớp mình.</span><b>20/10</b><small>Gửi các bạn nữ trong lớp ✿</small></span><span class="env-pocket"></span><span class="env-flap"></span><span class="env-seal">✿</span><span class="env-address">Gửi: <span data-personal-name></span></span>
       </button>
       <button class="button button-primary" id="openLetter" type="button">Mở thiệp <svg><use href="#icon-mail"/></svg></button>
+      <p id="envelopeStatus" role="status" aria-live="polite"></p>
       <p class="little-note">20/10 · Lớp mình</p>
       <p class="keyboard-shortcuts"><kbd>Enter</kbd> mở thư · <kbd>Esc</kbd> quay lại</p>
     </section>
 
     <section class="screen letter-screen" data-screen="letter" aria-labelledby="letterTitle" hidden>
       <div class="letter-paper" id="letterCapture">
-        <div class="letter-content"><div class="letter-topline"><span>GỬI CẬU, TỪ LỚP MÌNH</span><span>20 / 10</span></div><p class="letter-kicker">Gửi các bạn nữ lớp mình,</p><h2 id="letterTitle" tabindex="-1">Chúc mừng<br><span class="handwritten">20/10!</span></h2><p class="letter-salutation">Gửi <strong data-personal-name></strong>,</p><div class="letter-body"><p>Chúc bạn ngày 20/10 vui vẻ, nhiều sức khỏe và học tập thuận lợi.</p><p>Chúc những bài kiểm tra sắp tới ổn áp, bài nhóm chạy đúng tiến độ và cả lớp có thêm nhiều kỷ niệm vui.</p><p>Hẹn gặp ở lớp!</p></div><div class="letter-sign"><span>Từ các bạn cùng lớp,</span><strong class="handwritten">Chúc mừng 20/10! <span>✳</span></strong></div></div>
+        <div class="letter-content"><div class="letter-topline"><span>GỬI CẬU, TỪ TCTT67C</span><span>20 / 10</span></div><p class="letter-kicker">Một lời chúc từ các bạn nam,</p><h2 id="letterTitle" tabindex="-1">Chúc mừng<br><span class="handwritten">20/10!</span></h2><p class="letter-salutation">Gửi <strong data-personal-name></strong>,</p><div class="letter-body" id="letterBody"></div><div class="letter-sign"><span id="letterSignature">Từ các bạn nam TCTT67C</span><strong class="handwritten">20/10 vui nhé! <span>✳</span></strong></div></div>
         <div class="letter-art"><span class="letter-date">20<span>tháng</span>10</span><div id="letterBouquet" class="bouquet-art" aria-hidden="true"></div><p class="handwritten">Một phần của<br>vườn hoa lớp mình.</p><span class="letter-art-star" aria-hidden="true">✦</span><span class="letter-postmark">CLASS<br><b>20/10</b><br>20 · 10</span></div>
       </div>
-      <div class="letter-actions"><p><span>✧</span> Hoàn thành để góp hoa vào vườn chung của lớp.</p><div><button class="button button-primary" type="button" data-open-garden>Hoàn thành · Vào vườn lớp <span aria-hidden="true">✿</span></button><button class="button button-secondary" id="restartButton" type="button">Làm lại ↻</button><button class="button button-secondary" id="saveButton" type="button"><svg><use href="#icon-download"/></svg> Lưu thiệp về máy</button></div></div>
+      <p id="letterStatus" role="status" aria-live="polite"></p><button class="button button-secondary" id="retryLetter" type="button" hidden>Ghi nhận lại lượt mở</button>
+      <div class="letter-actions"><p><span>✧</span> Hoàn thành để góp hoa vào vườn chung của lớp.</p><div><button class="button button-primary" type="button" data-open-garden>Tiếp tục <span aria-hidden="true">✿</span></button><button class="button button-secondary" type="button" data-back="envelope">← Phong bì</button><button class="button button-secondary" id="restartButton" type="button">Làm lại ↻</button><button class="button button-secondary" id="saveButton" type="button"><svg><use href="#icon-download"/></svg> Lưu thiệp về máy</button></div></div>
     </section>
 
     <section class="screen garden-screen" id="gardenScreen" data-screen="garden" aria-label="Vườn hoa chung của lớp" tabindex="-1" hidden>

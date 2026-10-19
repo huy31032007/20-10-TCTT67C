@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { resolve, extname, dirname } from 'node:path';
 import { Readable } from 'node:stream';
 import { createGardenHandler } from './garden-handler.mjs';
+import { createLetterHandler } from './letter-handler.mjs';
+import { createReactionHandler } from './reaction-handler.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const publicRoot = resolve(root, 'public');
@@ -30,24 +32,26 @@ const store = { read, write(data, expected) {
   return operation;
 } };
 const garden = createGardenHandler(store);
+const letter = createLetterHandler(store);
+const reactions = createReactionHandler(store);
 const admin = createGardenHandler(store, { adminOnly: true, adminToken: process.env.GARDEN_ADMIN_TOKEN });
-const staticFiles = new Set(['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js', 'admin.html', 'admin.css', 'admin.js']);
-const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
+const staticFiles = new Set(['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js', 'admin.html', 'admin.css', 'admin.js', 'album.css', 'album.js', 'album-data.js', 'interactions.css', 'effects.js']);
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.ttf': 'font/ttf', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || 2010);
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    if (url.pathname === '/api/garden' || url.pathname === '/api/admin/garden') {
+    if (url.pathname === '/api/garden' || url.pathname === '/api/admin/garden' || url.pathname === '/api/letter' || url.pathname === '/api/reactions') {
       const request = new Request(url, { method: req.method, headers: req.headers, ...(req.method !== 'GET' && req.method !== 'HEAD' ? { body: Readable.toWeb(req), duplex: 'half' } : {}) });
-      const result = await (url.pathname === '/api/admin/garden' ? admin : garden)(request);
+      const result = await (url.pathname === '/api/reactions' ? reactions : url.pathname === '/api/letter' ? letter : url.pathname === '/api/admin/garden' ? admin : garden)(request);
       res.writeHead(result.status, Object.fromEntries(result.headers));
       res.end(Buffer.from(await result.arrayBuffer()));
       return;
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return; }
     const path = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
-    if (!staticFiles.has(path) && !/^(fonts|nhac)\/[a-zA-Z0-9_.-]+$/.test(path)) { res.writeHead(404); res.end('Not found'); return; }
+    if (!staticFiles.has(path) && !/^(fonts|nhac|photos)\/[a-zA-Z0-9_.-]+$/.test(path)) { res.writeHead(404); res.end('Not found'); return; }
     const target = resolve(publicRoot, path);
     if (!(await stat(target)).isFile()) throw Object.assign(new Error(), { code: 'ENOENT' });
     const bytes = await readFile(target);

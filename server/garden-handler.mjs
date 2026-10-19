@@ -7,6 +7,7 @@ const emptyGarden = () => ({ revision: 0, members: [] });
 const canonicalName = name => name.normalize('NFC').trim().replace(/\s+/g, ' ');
 const nameId = name => createHash('sha256').update(name.toLocaleLowerCase('vi')).digest('hex').slice(0, 24);
 const json = (body, status = 200, extra = {}) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store', ...extra } });
+const publicGarden = ({ revision, members }) => ({ revision, members });
 
 async function readGarden(store) {
   const saved = await store.read();
@@ -20,7 +21,7 @@ export function createGardenHandler(store, { sleep = ms => new Promise(resolve =
     try {
       if (adminOnly) {
         if (typeof adminToken !== 'string' || adminToken.length < 32) {
-          return json({ error: 'Chưa bật quản trị. Hãy đặt Secret GARDEN_ADMIN_TOKEN dài ít nhất 32 ký tự trên Worker.' }, 503);
+          return json({ error: 'Máy chủ chưa có mật khẩu xóa hoa hợp lệ. Chủ web cần đặt Secret GARDEN_ADMIN_TOKEN ít nhất 32 ký tự tại Worker Settings → Variables and Secrets, ngoài mục Build.' }, 503);
         }
         const supplied = request.headers.get('authorization') || '';
         const digest = value => createHash('sha256').update(value).digest();
@@ -28,7 +29,7 @@ export function createGardenHandler(store, { sleep = ms => new Promise(resolve =
           return json({ error: 'Mật khẩu quản trị không đúng.' }, 401, { 'WWW-Authenticate': 'Bearer' });
         }
       }
-      if (request.method === 'GET') return json((await readGarden(store)).data);
+      if (request.method === 'GET') return json(publicGarden((await readGarden(store)).data));
       const writeMethod = adminOnly ? 'DELETE' : 'POST';
       if (request.method !== writeMethod) return json({ error: 'Phương thức không được hỗ trợ.' }, 405, { Allow: `GET, ${writeMethod}` });
       const origin = request.headers.get('origin');
@@ -55,8 +56,8 @@ export function createGardenHandler(store, { sleep = ms => new Promise(resolve =
         for (let attempt = 0; attempt < 16; attempt++) {
           const { data, etag } = await readGarden(store);
           if (!data.members.some(member => member.id === id)) return json({ error: 'Cụm hoa này đã được xóa hoặc không tồn tại.' }, 404);
-          const next = { revision: data.revision + 1, members: data.members.filter(member => member.id !== id) };
-          if (await store.write(next, etag)) return json({ deleted: id, garden: next });
+          const next = { ...data, revision: data.revision + 1, members: data.members.filter(member => member.id !== id) };
+          if (await store.write(next, etag)) return json({ deleted: id, garden: publicGarden(next) });
           await sleep(15 + Math.random() * Math.min(220, 25 * (attempt + 1)));
         }
         return json({ error: 'Vườn đang có nhiều thay đổi. Hãy thử xóa lại.' }, 503, { 'Retry-After': '2' });
@@ -71,10 +72,10 @@ export function createGardenHandler(store, { sleep = ms => new Promise(resolve =
       for (let attempt = 0; attempt < 16; attempt++) {
         const { data, etag } = await readGarden(store);
         const existing = data.members.find(entry => entry.id === member.id);
-        if (existing) return json({ member: existing, created: false, garden: data });
+        if (existing) return json({ member: existing, created: false, garden: publicGarden(data) });
         if (data.members.length >= MAX_MEMBERS) return json({ error: 'Vườn đã đủ 300 tên.' }, 409);
-        const next = { revision: data.revision + 1, members: [...data.members, member] };
-        if (await store.write(next, etag)) return json({ member, created: true, garden: next }, 201);
+        const next = { ...data, revision: data.revision + 1, members: [...data.members, member] };
+        if (await store.write(next, etag)) return json({ member, created: true, garden: publicGarden(next) }, 201);
         await sleep(15 + Math.random() * Math.min(220, 25 * (attempt + 1)));
       }
       return json({ error: 'Đang có nhiều bạn tham gia. Thử lại sau ít giây.' }, 503, { 'Retry-After': '2' });

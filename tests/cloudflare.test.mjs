@@ -20,6 +20,22 @@ function database(t) {
   return { withSession(mode) { assert.equal(mode, 'first-primary'); return { prepare }; } };
 }
 
+test('Worker reserves and confirms letters through D1 without exposing assignments in the garden API', { skip: !DatabaseSync }, async t => {
+  const env = { GARDEN_DB: database(t) };
+  const make = (action, record) => new Request('https://class.example/api/letter', {
+    method:'POST', headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify({ action, visitor:'b'.repeat(32), ...(record ? { id:record.letter.id, cycle:record.cycle } : {}) })
+  });
+  const record = await (await worker.fetch(make('reserve'), env)).json();
+  assert.equal(record.opened, false);
+  const opened = await (await worker.fetch(make('open', record), env)).json();
+  assert.equal(opened.opened, true);
+  const garden = await (await worker.fetch(new Request('https://class.example/api/garden'), env)).json();
+  assert.deepEqual(Object.keys(garden).sort(), ['members','revision']);
+  assert.equal(garden.members.length, 0);
+  assert.equal(garden.revision, 2);
+});
+
 test('D1 SQL rejects competing first inserts and stale updates without losing stored data', { skip: !DatabaseSync }, async t => {
   const db = database(t), a = createD1Store(db), b = createD1Store(db);
   assert.equal(await a.read(), null);
@@ -58,6 +74,16 @@ test('Worker serves assets separately and returns JSON for unknown API routes', 
   assert.equal(unknown.status, 404);
   assert.match(unknown.headers.get('content-type'), /application\/json/);
   assert.equal(assetCalls, 1);
+});
+
+test('Worker persists photo reactions in D1 and returns only public totals', { skip: !DatabaseSync }, async t => {
+  const env = { GARDEN_DB:database(t) };
+  const result = await worker.fetch(new Request('https://class.example/api/reactions', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ photo:43, visitor:'c'.repeat(32), action:'set', emoji:3, active:true }) }), env);
+  assert.equal(result.status, 200);
+  const data = await (await worker.fetch(new Request('https://class.example/api/reactions?photo=43'), env)).json();
+  assert.deepEqual(data, { photo:43, revision:1, counts:[0,0,0,1] });
+  const garden = await (await worker.fetch(new Request('https://class.example/api/garden'), env)).json();
+  assert.deepEqual(garden, { revision:1, members:[] });
 });
 
 test('Cloudflare Worker connects admin authorization and deletion to D1', { skip: !DatabaseSync }, async t => {

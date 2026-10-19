@@ -1,0 +1,26 @@
+/* Current reactions, paper sound and petal effects are independent of the scrapbook skin. */
+body[data-view="door"] .paper-sound-toggle { display:none; }
+.paper-sound-toggle { position:fixed; z-index:110; right:max(16px,env(safe-area-inset-right)); bottom:max(16px,env(safe-area-inset-bottom)); display:grid; place-items:center; width:38px; height:38px; padding:9px; border:1px solid var(--line); border-radius:50%; background:var(--paper); color:var(--purple-dark); }
+.paper-sound-toggle[aria-pressed="false"] { opacity:.6; }
+.paper-sound-toggle svg { width:18px; height:18px; }
+
+/* Reactions live only in the native lightbox, below the image. */
+.album-zoom.has-reactions[open] { display:flex; align-items:center; flex-direction:column; gap:10px; }
+.album-zoom.has-reactions img { max-height:min(70svh,calc(96svh - 165px)); }
+.album-reactions { width:min(92vw,420px); color:var(--paper); }
+.reaction-buttons { display:flex; justify-content:center; gap:8px; }
+.reaction-buttons button { display:flex; align-items:center; justify-content:center; gap:6px; min-height:44px; min-width:54px; padding:7px 9px; border:1px solid var(--line); border-radius:24px; background:var(--paper); color:var(--ink); font-variant-numeric:tabular-nums; }
+.reaction-buttons button[aria-pressed="true"] { background:var(--lilac); border-color:var(--purple); }
+.reaction-buttons button:disabled { opacity:.65; }
+.reaction-buttons button>span:first-child { font-size:20px; }
+.reaction-status { margin:8px 0 0; text-align:center; font-size:11px; line-height:1.5; }
+.reaction-status:empty { display:none; }
+.reaction-retry { margin-left:6px; padding:4px 8px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); }
+
+/* Small individual petals; no viewport-size container. Both bursts self-remove. */
+.letter-opening-petal,.garden-touch-petal { pointer-events:none; user-select:none; width:10px; height:15px; border-radius:75% 20% 75% 20%; background:var(--lilac); opacity:0; }
+.letter-opening-petal { position:fixed; z-index:105; animation:one-shot-petal 3s ease-out both; }
+.garden-touch-petal { position:absolute; z-index:3; animation:one-shot-petal 1.6s ease-out both; }
+.letter-opening-petal.is-lily,.garden-touch-petal.is-lily { width:8px; height:20px; border-radius:90% 0 90% 0; background:linear-gradient(var(--paper) 65%,var(--yellow)); }
+@keyframes one-shot-petal { 0% { opacity:0; transform:translate(0,0) rotate(0deg); } 12%,65% { opacity:.8; } 100% { opacity:0; transform:translate(var(--petal-x),var(--petal-y)) rotate(var(--petal-turn)); } }
+@media(prefers-reduced-motion:reduce) { .album-turn-viewport,.letter-opening-petal,.garden-touch-petal { display:none; animation:none; } }

@@ -4,7 +4,7 @@
   const el = id => document.getElementById(id);
   let revision = -1, members = [], previousScreen = 'letter';
   let refreshTimer, refreshInFlight = null, joinInFlight = false, pendingName = '';
-  const plants = new Map();
+  const plants = new Map(), touchTimers = new Map();
   let namedPlant = null;
   function showName(plant) {
     if (namedPlant && namedPlant !== plant) hideName(namedPlant);
@@ -85,7 +85,7 @@
     const currentIds = new Set(members.map(member => member.id));
     for (const [id, plant] of plants) {
       if (currentIds.has(id)) continue;
-      hideName(plant); plant.remove(); plants.delete(id);
+      hideName(plant); clearTimeout(touchTimers.get(plant)); touchTimers.delete(plant); plant.remove(); plants.delete(id);
     }
     for (const member of members) {
       if (plants.has(member.id)) continue;
@@ -104,18 +104,21 @@
       name.hidden = true;
       plant.appendChild(name);
       plant.setAttribute('aria-describedby', name.id);
-      let shakeTimer;
+      let shakeTimer, lastPetals = -Infinity;
       const shake = () => {
         clearTimeout(shakeTimer);
         plant.classList.add('is-touched');
-        shakeTimer = setTimeout(() => plant.classList.remove('is-touched'), 900);
+        shakeTimer = setTimeout(() => { plant.classList.remove('is-touched'); touchTimers.delete(plant); }, 1100);
+        touchTimers.set(plant, shakeTimer);
+        if (performance.now() - lastPetals > 1800) { lastPetals = performance.now(); window.ClassroomEffects?.gardenPetals(plant); }
       };
-      plant.addEventListener('pointerenter', event => { if (event.pointerType !== 'touch') showName(plant); });
-      plant.addEventListener('pointerleave', () => { if (document.activeElement !== plant) hideName(plant); });
-      plant.addEventListener('focus', () => showName(plant));
-      plant.addEventListener('blur', () => hideName(plant));
+      plant.addEventListener('pointerenter', event => { if (event.pointerType !== 'touch') { showName(plant); shake(); } });
+      plant.addEventListener('pointerleave', () => { if (!plant.contains(document.activeElement)) hideName(plant); });
+      plant.addEventListener('focusin', () => showName(plant));
+      plant.addEventListener('focusout', event => { if (!plant.contains(event.relatedTarget)) hideName(plant); });
       plant.addEventListener('pointerdown', () => { showName(plant); shake(); });
       plant.addEventListener('keydown', event => {
+        if (event.target !== plant) return;
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showName(plant); shake(); }
       });
       plants.set(member.id,plant); el('gardenPlots').appendChild(plant);
@@ -173,7 +176,7 @@
   document.addEventListener('classroom:screen-changed',event => {
     hideName();
     if (event.detail.screen === 'garden') { layout(); if (!joinInFlight) refresh(); }
-    else scheduleRefresh();
+    else { scheduleRefresh(); for (const [plant, timer] of touchTimers) { clearTimeout(timer); plant.classList.remove('is-touched'); } touchTimers.clear(); }
   });
   document.addEventListener('pointerdown', event => { if (namedPlant && !namedPlant.contains(event.target)) hideName(); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') hideName(); });
