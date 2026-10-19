@@ -10,6 +10,7 @@ export function PolaroidCard({ photo, index, slot = 0, onPhoto, enabled, reduced
   const contents = <>
     <WashiTape index={index}/>
     {still ? <div className="album-photo-open"><img src={photo.src} alt="" width={photo.width} height={photo.height} decoding="async"/></div> : <button type="button" className="album-photo-open" onClick={() => onPhoto(photo)} aria-label={`Xem ảnh kỷ niệm ${index + 1} ở kích thước lớn`}><img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} decoding="async"/></button>}
+    <figcaption><span>TCTT67C</span><span className="album-print-number">{String(index + 1).padStart(2, '0')}</span></figcaption>
   </>;
   if (still) return <figure className="album-photo" style={{ ...sourceStyle, transform:`translateY(${offset}px) rotate(${tilt}deg)` }}>{contents}</figure>;
   return <m.figure className="album-photo" style={sourceStyle}

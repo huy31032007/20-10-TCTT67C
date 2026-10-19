@@ -6,6 +6,8 @@ import { VinylPlayer } from './VinylPlayer.jsx';
 import { ProgressBar } from './ProgressBar.jsx';
 import { PhotoReactions } from './PhotoReactions.jsx';
 import { buildAlbumPages } from './album-layout.mjs';
+import { usePageTurn } from './usePageTurn.jsx';
+import { dragIntent, dragProgress, shouldCompleteTurn } from './page-turn.mjs';
 
 const photos = window.CLASS_ALBUM || [];
 const pages = buildAlbumPages(photos);
@@ -26,8 +28,6 @@ function StoryViewer({ initialPage, onPageChange }) {
   const reduced = useReducedMotion();
   const [canHover, setCanHover] = useState(() => matchMedia('(hover: hover) and (pointer: fine)').matches);
   const [page, setPage] = useState(initialPage);
-  const [turn, setTurn] = useState(null);
-  const turning = Boolean(turn);
   const [zoom, setZoom] = useState(null);
   const [automatic, setAutomatic] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -36,18 +36,56 @@ function StoryViewer({ initialPage, onPageChange }) {
   const [playing, setPlaying] = useState(!document.getElementById('bgMusic').paused);
   const [sparkles, setSparkles] = useState(false);
   const celebrated = useRef(false);
-  const dialog = useRef(null), touch = useRef(null), holdStart = useRef(null), suppressUntil = useRef(0);
+  const dialog = useRef(null), gesture = useRef(null), holdStart = useRef(null), suppressUntil = useRef(0);
   const progress = useMotionValue(0);
-  const flip = useCallback(delta => {
-    if (turning || zoom) return;
-    const next = Math.max(0, Math.min(total - 1, page + delta));
-    if (next !== page) { window.ClassroomEffects?.paper(); if (!reduced) setTurn({ from:page, to:next, delta }); setPage(next); }
-  }, [page, turning, zoom, reduced]);
+  const { turn, position, begin, settle, flip, isBusy } = usePageTurn({
+    page, total, reduced, blocked:Boolean(zoom) || hidden, onCommit:setPage,
+    onStart:() => window.ClassroomEffects?.paper()
+  });
+  const turning = Boolean(turn);
+
+  const startGesture = event => {
+    if (event.button !== 0 || !event.isPrimary || isBusy() || zoom) return;
+    const button = event.target.closest('button');
+    if (button && !button.matches('.album-photo-open,.album-edge')) return;
+    gesture.current = { id:event.pointerId, x:event.clientX, y:event.clientY, lastX:event.clientX,
+      lastTime:performance.now(), velocity:0, active:false, travel:event.currentTarget.clientWidth,
+      delta:Number(button?.dataset.turn) || null };
+    if (automatic) { holdStart.current = performance.now(); setHolding(true); }
+  };
+  const moveGesture = event => {
+    const g = gesture.current;
+    if (!g || g.id !== event.pointerId) return;
+    const dx = event.clientX - g.x, dy = event.clientY - g.y;
+    if (!g.active) {
+      if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { gesture.current = null; return; }
+      if (!dragIntent(dx, dy)) return;
+      g.delta ??= dx < 0 ? 1 : -1;
+      if (!begin(g.delta, true)) { gesture.current = null; return; }
+      g.active = true; event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    event.preventDefault();
+    const now = performance.now(), elapsed = now - g.lastTime;
+    if (elapsed > 0) g.velocity = (g.lastX - event.clientX) * g.delta / elapsed;
+    g.lastX = event.clientX; g.lastTime = now;
+    position.set(dragProgress(g.x, event.clientX, g.delta, g.travel));
+  };
+  const finishGesture = (event, canceled = false) => {
+    const g = gesture.current;
+    if (!g || g.id !== event.pointerId) return;
+    gesture.current = null;
+    if (g.active) {
+      suppressUntil.current = performance.now() + 450;
+      const velocity = performance.now() - g.lastTime < 100 ? g.velocity : 0;
+      settle(!canceled && shouldCompleteTurn(position.get(), velocity));
+    }
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  };
 
   useEffect(() => {
     document.getElementById('albumTitle')?.focus({ preventScroll:true });
     window.scrollTo({ top:0, behavior:'instant' });
-    const visibility = () => { setHidden(document.hidden); setHolding(false); setTurn(null); };
+    const visibility = () => { setHidden(document.hidden); setHolding(false); gesture.current = null; };
     document.addEventListener('visibilitychange', visibility);
     return () => document.removeEventListener('visibilitychange', visibility);
   }, []);
@@ -63,7 +101,6 @@ function StoryViewer({ initialPage, onPageChange }) {
     audio.addEventListener('play', sync); audio.addEventListener('pause', sync);
     return () => { audio.removeEventListener('play', sync); audio.removeEventListener('pause', sync); };
   }, []);
-  useEffect(() => { if (reduced) setTurn(null); }, [reduced]);
   useEffect(() => {
     if (page === total - 1 && !turning && !zoom && !hidden && !reduced && !celebrated.current) {
       celebrated.current = true; setSparkles(true);
@@ -121,8 +158,9 @@ function StoryViewer({ initialPage, onPageChange }) {
     return () => { if (element?.open) element.close(); };
   }, []);
 
-  const openPhoto = photo => { if (!turning && performance.now() >= suppressUntil.current) setZoom(photo); };
+  const openPhoto = photo => { if (!isBusy() && performance.now() >= suppressUntil.current) setZoom(photo); };
   const toggleStory = () => {
+    if (isBusy()) return;
     if (automatic && paused) {
       if (page === total - 1 && progress.get() >= 1) setPage(0);
       setPaused(false);
@@ -138,6 +176,7 @@ function StoryViewer({ initialPage, onPageChange }) {
     <FilmGrain/>
     <div className="album-top">
       <button className="album-icon" type="button" data-back="name" aria-label="Quay lại nhập tên" onClick={() => window.ClassroomApp.navigate('name')}><Icon name="back"/></button>
+      <div className="album-heading"><span>TCTT67C</span><h2>Sổ kỷ niệm</h2></div>
       <div className="album-tools">
         <button className="album-icon" type="button" aria-label={automatic && !paused ? 'Tạm dừng trình chiếu' : 'Tiếp tục trình chiếu'} aria-pressed={automatic && !paused} onClick={toggleStory}><Icon name={automatic && !paused ? 'pause' : 'play'}/></button>
         {automatic && <button className="album-icon" type="button" aria-label="Lật sổ bằng tay" onClick={stopStory}><Icon name="book"/></button>}
@@ -146,26 +185,26 @@ function StoryViewer({ initialPage, onPageChange }) {
     </div>
     <ProgressBar total={total} page={page} progress={progress} automatic={automatic} reduced={reduced}/>
     <div className="album-reader">
-      <button id="albumPrev" className="album-icon album-side" type="button" aria-label="Trang ảnh trước" disabled={page === 0} onClick={() => flip(-1)}><Icon name="prev"/></button>
-      <div className={`album-book ${pages[page].length === 1 ? 'album-book-single' : ''}`} id="albumBook" aria-label="Sổ ảnh kỷ niệm của lớp"
-        onPointerDown={event => { if (automatic && event.button === 0) { holdStart.current = performance.now(); setHolding(true); } }} onPointerUp={release} onPointerCancel={release}
-        onTouchStart={event => { touch.current = event.touches.length === 1 ? { x:event.touches[0].clientX, y:event.touches[0].clientY } : null; }}
-        onTouchEnd={event => {
-          if (!touch.current) return;
-          const dx = event.changedTouches[0].clientX - touch.current.x, dy = event.changedTouches[0].clientY - touch.current.y;
-          if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) { suppressUntil.current = performance.now() + 400; flip(dx < 0 ? 1 : -1); }
-          touch.current = null; release();
-        }} onTouchCancel={() => { touch.current = null; release(); }}
+      <button id="albumPrev" className="album-icon album-side" type="button" aria-label="Trang ảnh trước" disabled={page === 0 || turning} onClick={() => flip(-1)}><Icon name="prev"/></button>
+      <div className="album-book" id="albumBook" aria-label="Sổ ảnh kỷ niệm của lớp" aria-busy={turning}
+        onPointerDown={startGesture} onPointerMove={moveGesture}
+        onPointerUp={event => { finishGesture(event); release(); }}
+        onPointerCancel={event => { finishGesture(event, true); release(); }}
+        onLostPointerCapture={event => finishGesture(event, true)}
+        onDragStart={event => event.preventDefault()}
         onClick={event => {
-          if (!automatic || event.target.closest('button') || performance.now() < suppressUntil.current) return;
+          if (event.target.closest('button') || performance.now() < suppressUntil.current) return;
           const bounds = event.currentTarget.getBoundingClientRect(); flip(event.clientX < bounds.left + bounds.width / 2 ? -1 : 1);
         }}>
         <AlbumSpread id="albumPage" key={page} indices={pages[page]} photos={photos} onPhoto={openPhoto} enabled={decorationEnabled} reduced={reduced} canHover={canHover}/>
         <span className="album-ribbon" aria-hidden="true"/>
         {sparkles && <ClosingSparkles/>}
-        {turn && <TurningLeaf key={`turn-${page}`} turn={turn} pages={pages} photos={photos} onComplete={() => setTurn(null)}/>}
+        {turn && !reduced && <TurningLeaf turn={turn} position={position} pages={pages} photos={photos}/>}
+        {[-1, 1].map(delta => <button key={delta} type="button" className={`album-edge album-edge-${delta > 0 ? 'next' : 'prev'}`} data-turn={delta}
+          aria-label={delta > 0 ? 'Lật từ mép phải' : 'Lật từ mép trái'} disabled={turning || (delta > 0 ? page === total - 1 : page === 0)}
+          onClick={() => { if (performance.now() >= suppressUntil.current) flip(delta); }}><span className="album-corner-curl" aria-hidden="true"/></button>)}
       </div>
-      <button id="albumNext" className="album-icon album-side" type="button" aria-label="Trang ảnh tiếp" disabled={page === total - 1} onClick={() => flip(1)}><Icon name="next"/></button>
+      <button id="albumNext" className="album-icon album-side" type="button" aria-label="Trang ảnh tiếp" disabled={page === total - 1 || turning} onClick={() => flip(1)}><Icon name="next"/></button>
     </div>
     <div className="album-bottom"><Doodle kind="arrow" className="album-continue-doodle"/><button id="albumContinue" type="button" onClick={() => window.ClassroomApp.navigate('envelope')}>Tiếp tục<Icon name="mail"/></button></div>
     <p className="sr-only" id="albumCounter" aria-live="polite">Trang {page + 1} trên {total}</p>

@@ -1,5 +1,25 @@
 # Khôi phục hiệu ứng sổ trước refactor — 19/10/2026
 
+## Mới nhất: giấy vintage hòa với nền pastel và cơ chế lật theo con trỏ
+
+Yêu cầu mới nhất cho phép caption viết tay và tông giấy vintage, sau đó chốt **đồng bộ với nền chính web**. Vì vậy nền pastel của sổ được giữ lại; mặt giấy dùng parchment `#E6DCCD`, bìa kraft `#D4C4B0`, nét graphite `#4A453E`, bút navy `#2C3A47`, mực sepia `#5A4636`. Các ghi nhận “không caption” hoặc màu bìa xanh bên dưới là lịch sử.
+
+- Khung analog `#F5F0E6`, viền cũ, băng dính matte rách `rgba(235,225,205,.65)`. Bộ lọc sepia .15 / contrast .95 / brightness .97 chỉ áp dụng thumbnail; lightbox vẫn ảnh nguồn không filter. Caption factual “TCTT67C” và số thứ tự ảnh; không bịa ngày chụp. Font Caveat và Cormorant Garamond được lưu cục bộ bằng WOFF2 (5 subset, khoảng 187 KB), kèm OFL từ kho Google Fonts; không cần gọi dịch vụ font bên ngoài khi xem web.
+- Thay sticker màu/hoa/trái tim bằng 8 sketch nét bút inline SVG: máy bay, cassette, guitar, xe đạp, giày vải, chồng vở, phim và nhóm bạn. Ghi chú có dòng kẻ, dấu bưu điện “20·10” chỉ dịp 20/10. Doodle/ghi chú multiply, opacity .75; không nhận thao tác. Grain .04 bằng SVG tile cache, vignette rất nhẹ; không có noise animation toàn màn hình.
+- Tách điều khiển lật sang `usePageTurn.jsx`, toán kéo sang `page-turn.mjs`. Nút/mép giấy/ArrowLeft/Right hoạt động khi đang đọc tay. Pointer Events hỗ trợ kéo từ giấy/ảnh/mép: ngưỡng 8 px và hướng ngang rõ ràng mới bắt đầu; dùng pointer capture, progress theo con trỏ, thả ngắn/đổi hướng trả về, kéo đủ xa hoặc flick sẽ hoàn thành. Nhấp ảnh vẫn mở lightbox; click phát sinh sau kéo được chặn. Giữ cuộn dọc cho mobile.
+- Chỉ commit trang đích khi chuyển động hoàn tất. Source vẫn đứng yên, destination lộ dưới nửa đang lật, hai mặt front/back độc lập, backface hidden và sai lệch Z .1 px để tránh z-fighting. Perspective 2200 px, easing `[.645,.045,.355,1]`; nâng nhẹ theo sin góc và bóng đổi dịch chuyển/độ mờ theo progress. Stage 3D không overflow hidden; clip chỉ nội dung mỗi mặt. Desktop lật quanh gáy giữa, mobile lật toàn tờ. Mép ngoài có gấp góc nhỏ khi hover/focus.
+- Chặn lật chồng bằng ref đồng bộ; bỏ animation/timer CSS lật cũ. Resize/ẩn tab/rời sổ hủy phần lật dở; reduced motion đổi trang trực tiếp. Chỉ có trang hiện tại lúc nghỉ, preload trang sau ngoài DOM; khi lật thêm destination và hai mặt tạm, tối đa 12 ảnh tạm/trang cho chuyển giữa hai trang ba ảnh (không mount cả 43).
+- Giữ hành trình cửa → tên → sổ 43 ảnh/24 trang → phong thư → vườn, backend/schema/D1, 60 thư, hoa, Photograph, cảm xúc chung và micro-SFX. `server/local.mjs` chỉ thêm MIME WOFF2 cho preview. Không đổi bytes 43 ảnh nguồn. Bản trước sửa: `/tmp/tctt67c-before-vintage/`.
+
+Kiểm chứng thực tế: **32/32 tests pass**, không skipped (27 cũ + 5 cho biên trang, ý định kéo, progress, ngưỡng thả và đủ ID ảnh). Build và Cloudflare dry-run pass; đây không phải deploy. Trình duyệt kiểm tra 144 tổ hợp (24 trang × 320/360/390/768/1024/1280 px): đủ 43 ảnh/viewport, một kích thước giấy cố định/viewport, ảnh/caption trong giấy, không tràn ngang, mũi tên nhận thao tác, không giữ tờ tạm khi nghỉ. Đã thử click mũi tên/mép, bàn phím liên tiếp chỉ tiến một trang, counter vẫn source trong khi xoay, bóng/lighting có giá trị đổi theo góc, focus mép hiện gấp góc, lightbox 4 cảm xúc/ảnh không filter, bật/tắt nhạc đổi running/paused, rời sổ giữa lượt lật gỡ viewer/grain/leaf. Trình chiếu tự chạy từ trang 4 tới trang 12 và nút pause đổi trạng thái đúng. Font local trả HTTP 200/font/woff2, console QA không lỗi/cảnh báo tại thời điểm kiểm tra.
+
+**Giới hạn:** chưa kéo chuột/ngón tay thật hoặc hover bằng công cụ (browser hiện tại không cung cấp các thao tác đó); đã test phần toán kéo/thả, chưa xác nhận end-to-end bằng thiết bị. Chưa profile FPS/CPU hoặc đổi reduced-motion của hệ điều hành. Đây là lật 3D mô phỏng với ánh sáng, không phải mô phỏng vật lý giấy mềm. Không viết dữ liệu thử production, không commit/push/deploy.
+
+File chỉnh: `src/album/AlbumApp.jsx`, `AlbumSheet.jsx`, `PolaroidCard.jsx`, `Decorations.jsx`; file mới `usePageTurn.jsx`, `page-turn.mjs`, `tests/page-turn.test.mjs`; `public/album.css`, bundle sinh `album.js`, 5 font WOFF2 + 2 OFL; MIME font trong `server/local.mjs` và tài liệu này.
+
+Bằng chứng layout: `/tmp/tctt67c-recap-qa/vintage-layout-qa.json`; ảnh: `vintage-desktop.png`, `vintage-mobile.png`. Preview chính: http://127.0.0.1:2027/. Bước tiếp theo: duyệt tông màu và kéo thử mép giấy trên chuột/điện thoại ở preview.
+
+
 ## Mới nhất: giấy bằng nhau và khôi phục chuyển động qua gáy
 
 Theo xác nhận mới của người dùng, mặt sổ chỉ giữ ảnh và trang trí: không caption, dấu ngày, thẻ thống kê hoặc hóa đơn. Giữ 43 ảnh / 24 trang và cách nhóm 1–3 ảnh; không thay đổi ảnh, bảng màu/nền hoặc nghiệp vụ thư/vườn/cảm xúc.
