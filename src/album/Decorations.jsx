@@ -1,7 +1,7 @@
 import React from 'react';
 
 export function FilmGrain() {
-  // A cached 128px tile, rather than a live full-screen SVG noise filter.
+  // SVG noise is cached as a small repeating image; there is no animated filter.
   return <span className="album-grain" aria-hidden="true"/>;
 }
 
@@ -25,10 +25,18 @@ export function PaperClip() {
 
 export function Doodle({ kind = 'star', className = '' }) {
   return <span className={`album-doodle ${className}`} aria-hidden="true"><svg viewBox="0 0 40 40">
-    {kind === 'flower' ? <><path d="M19 36Q16 25 20 15M18 30Q6 29 10 22Q17 23 18 30" className="doodle-leaf"/><g className="doodle-petals">{[0,60,120,180,240,300].map(angle => <ellipse key={angle} cx="20" cy="8" rx="4" ry="7" transform={`rotate(${angle} 20 15)`}/>)}</g><circle cx="20" cy="15" r="4.3" className="doodle-center"/></> : kind === 'music' ? <path d="M17 29V10l15-4v18M17 15l15-4M17 28c-7-5-14 5-7 6 4 1 7-1 7-6m15-5c-7-5-14 5-7 6 4 1 7-1 7-6"/> : kind === 'arrow' ? <path d="M5 12c20-12 31 1 14 14m-1-9v11l11-2"/> : <path d="M20 3Q22 18 37 20Q22 22 20 37Q18 22 3 20Q18 18 20 3Z"/>}
+    {kind === 'flower' ? <><path d="M19 36Q16 25 20 15M18 30Q6 29 10 22Q17 23 18 30" className="doodle-leaf"/><g className="doodle-petals">{[0,60,120,180,240,300].map(angle => <ellipse key={angle} cx="20" cy="8" rx="4" ry="7" transform={`rotate(${angle} 20 15)`}/>)}</g><circle cx="20" cy="15" r="4.3" className="doodle-center"/></> : kind === 'music' ? <path d="M17 29V10l15-4v18M17 15l15-4M17 28c-7-5-14 5-7 6 4 1 7-1 7-6m15-5c-7-5-14 5-7 6 4 1 7-1 7-6"/> : kind === 'heart' ? <path d="M20 34C-3 19 4 5 14 10l6 5 5-6c12-8 21 8-5 25M12 11q-6 4-1 11"/> : kind === 'arrow' ? <path d="M5 12c20-12 31 1 14 14m-1-9v11l11-2"/> : <path d="M20 3Q22 18 37 20Q22 22 20 37Q18 22 3 20Q18 18 20 3Z"/>}
   </svg></span>;
 }
 
 export function PageDoodles({ index }) {
-  return <><Doodle kind={index % 2 ? 'music' : 'flower'} className="album-corner-doodle"/><Doodle className="album-tiny-star"/></>;
+  return <><StickerBadge className="album-corner-sticker"><Doodle kind={index % 3 === 2 ? 'heart' : index % 2 ? 'music' : 'flower'} className="album-sticker-doodle"/></StickerBadge><Doodle className="album-tiny-star"/></>;
+}
+
+export function StickerBadge({ children, className = '' }) {
+  return <span className={`album-sticker-badge ${className}`} aria-hidden="true">{children}</span>;
+}
+
+export function ClosingSparkles() {
+  return <div className="album-closing-sparkles" aria-hidden="true">{Array.from({ length:14 }, (_, i) => <span key={i} style={{ '--sparkle-x':`${4 + i * 7}%`, '--sparkle-delay':`${i % 4 * .09}s`, '--sparkle-drift':`${(i % 3 - 1) * 18}px` }}><svg viewBox="0 0 40 40"><path d="M20 3Q22 18 37 20Q22 22 20 37Q18 22 3 20Q18 18 20 3Z"/></svg></span>)}</div>;
 }

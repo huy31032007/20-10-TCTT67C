@@ -35,8 +35,8 @@ const garden = createGardenHandler(store);
 const letter = createLetterHandler(store);
 const reactions = createReactionHandler(store);
 const admin = createGardenHandler(store, { adminOnly: true, adminToken: process.env.GARDEN_ADMIN_TOKEN });
-const staticFiles = new Set(['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js', 'admin.html', 'admin.css', 'admin.js', 'album.css', 'album.js', 'album-data.js', 'interactions.css', 'effects.js']);
-const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.ttf': 'font/ttf', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
+const staticFiles = new Set(['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js', 'admin.html', 'admin.css', 'admin.js', 'album.css', 'album.js', 'album-data.js', 'interactions.css', 'effects.js', 'paper-grain.png']);
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.ttf': 'font/ttf', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || 2010);
 const server = createServer(async (req, res) => {

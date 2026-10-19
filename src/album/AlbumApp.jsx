@@ -1,22 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { animate, domAnimation, LazyMotion, MotionConfig, useMotionValue } from 'framer-motion';
-import { Doodle, FilmGrain, Icon } from './Decorations.jsx';
-import { AlbumSheet, TurningLeaf } from './AlbumSheet.jsx';
+import { ClosingSparkles, Doodle, FilmGrain, Icon } from './Decorations.jsx';
+import { AlbumSpread, TurningLeaf } from './AlbumSheet.jsx';
 import { VinylPlayer } from './VinylPlayer.jsx';
 import { ProgressBar } from './ProgressBar.jsx';
 import { PhotoReactions } from './PhotoReactions.jsx';
+import { buildAlbumPages } from './album-layout.mjs';
 
 const photos = window.CLASS_ALBUM || [];
-const featured = [0,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,12];
-const order = [...new Set([...featured, ...photos.map((_, i) => i)])].filter(i => photos[i]);
-// Five single-photo pages and nineteen pairs: 43 originals, 24 pages, no duplicates.
-const singles = new Set([0,6,12,18,23]);
-const pages = [];
-for (let cursor = 0; cursor < order.length;) {
-  const count = singles.has(pages.length) ? 1 : 2;
-  pages.push(order.slice(cursor, cursor + count));
-  cursor += count;
-}
+const pages = buildAlbumPages(photos);
 const total = pages.length;
 
 function useReducedMotion() {
@@ -42,6 +34,8 @@ function StoryViewer({ initialPage, onPageChange }) {
   const [holding, setHolding] = useState(false);
   const [hidden, setHidden] = useState(document.hidden);
   const [playing, setPlaying] = useState(!document.getElementById('bgMusic').paused);
+  const [sparkles, setSparkles] = useState(false);
+  const celebrated = useRef(false);
   const dialog = useRef(null), touch = useRef(null), holdStart = useRef(null), suppressUntil = useRef(0);
   const progress = useMotionValue(0);
   const flip = useCallback(delta => {
@@ -70,6 +64,17 @@ function StoryViewer({ initialPage, onPageChange }) {
     return () => { audio.removeEventListener('play', sync); audio.removeEventListener('pause', sync); };
   }, []);
   useEffect(() => { if (reduced) setTurn(null); }, [reduced]);
+  useEffect(() => {
+    if (page === total - 1 && !turning && !zoom && !hidden && !reduced && !celebrated.current) {
+      celebrated.current = true; setSparkles(true);
+    }
+  }, [page, turning, zoom, hidden, reduced]);
+  useEffect(() => {
+    if (!sparkles) return;
+    const timer = setTimeout(() => setSparkles(false), 2800);
+    return () => clearTimeout(timer);
+  }, [sparkles]);
+  useEffect(() => { if (hidden || zoom || reduced || turning) setSparkles(false); }, [hidden, zoom, reduced, turning]);
 
   const running = automatic && !paused && !holding && !hidden && !zoom && !turning;
   useEffect(() => {
@@ -155,10 +160,9 @@ function StoryViewer({ initialPage, onPageChange }) {
           if (!automatic || event.target.closest('button') || performance.now() < suppressUntil.current) return;
           const bounds = event.currentTarget.getBoundingClientRect(); flip(event.clientX < bounds.left + bounds.width / 2 ? -1 : 1);
         }}>
-        <div className="album-page" id="albumPage" key={page}>
-          {pages[page].map((index, slot) => <AlbumSheet key={index} photo={photos[index]} index={index} slot={slot} onPhoto={openPhoto} enabled={decorationEnabled} reduced={reduced} canHover={canHover}/>)}
-        </div>
+        <AlbumSpread id="albumPage" key={page} indices={pages[page]} photos={photos} onPhoto={openPhoto} enabled={decorationEnabled} reduced={reduced} canHover={canHover}/>
         <span className="album-ribbon" aria-hidden="true"/>
+        {sparkles && <ClosingSparkles/>}
         {turn && <TurningLeaf key={`turn-${page}`} turn={turn} pages={pages} photos={photos} onComplete={() => setTurn(null)}/>}
       </div>
       <button id="albumNext" className="album-icon album-side" type="button" aria-label="Trang ảnh tiếp" disabled={page === total - 1} onClick={() => flip(1)}><Icon name="next"/></button>
