@@ -20,7 +20,7 @@ function database(t) {
   return { withSession(mode) { assert.equal(mode, 'first-primary'); return { prepare }; } };
 }
 
-test('Worker reserves and confirms letters through D1 without exposing assignments in the garden API', { skip: !DatabaseSync }, async t => {
+test('Worker random letters leave D1 garden state untouched', { skip: !DatabaseSync }, async t => {
   const env = { GARDEN_DB: database(t) };
   const make = (action, record) => new Request('https://class.example/api/letter', {
     method:'POST', headers:{ 'Content-Type':'application/json' },
@@ -33,7 +33,7 @@ test('Worker reserves and confirms letters through D1 without exposing assignmen
   const garden = await (await worker.fetch(new Request('https://class.example/api/garden'), env)).json();
   assert.deepEqual(Object.keys(garden).sort(), ['members','revision']);
   assert.equal(garden.members.length, 0);
-  assert.equal(garden.revision, 2);
+  assert.equal(garden.revision, 0);
 });
 
 test('D1 SQL rejects competing first inserts and stale updates without losing stored data', { skip: !DatabaseSync }, async t => {
@@ -99,4 +99,15 @@ test('Cloudflare Worker connects admin authorization and deletion to D1', { skip
   }), env);
   assert.equal(removed.status, 200);
   assert.deepEqual((await removed.json()).garden, { revision: 2, members: [] });
+});
+
+
+test('Worker can return a random wish without any database binding', async () => {
+  const response = await worker.fetch(new Request('https://class.example/api/letter', {
+    method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'reserve' })
+  }), {});
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert(data.letter.id >= 1 && data.letter.id <= 30);
+  assert(data.letter.paragraphs.join(' ').includes('[tên]'));
 });

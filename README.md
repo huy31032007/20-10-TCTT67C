@@ -35,9 +35,9 @@ Làm theo [CLOUDFLARE.md](CLOUDFLARE.md) để đưa lên Cloudflare từ đầu
 1. Hai cánh cửa phủ kín toàn bộ trang, không có chữ. Chỉ có ổ khóa ở giữa. Bấm ổ khóa hoặc Enter để mở cửa và bật Photograph.
 2. Landing page có vùng hoa ban đầu hoàn toàn trống, bàn phím hoa ở phía dưới. Gõ bằng bàn phím thật hoặc chạm các phím hoa.
 3. Mỗi chữ cái thêm một nhành có hoa chính, hoa nhỏ và lá. Hoa bay từ phím lên vùng kết hoa, cánh hoa tản nhẹ. Xóa chữ sẽ bớt nhành.
-4. Nhấn OK hoặc Enter mới gói giấy và thắt nơ, rồi chuyển thẳng đến phong bì thiệp 20/10.
-5. Bấm mở phong bì để xem thiệp 20/10. Có thể tải thiệp PNG hoặc làm lại.
-6. Ở cuối thiệp, bấm **Hoàn thành · Vào vườn lớp**. Lúc này tên mới được gửi lên vườn chung. Vườn là cảnh minh họa toàn màn hình, mặc định không có chữ: mỗi bạn đã hoàn thành đóng góp một cụm hoa mọc trực tiếp trên cỏ, không giấy bọc hay nơ. Các cụm xếp sát, so le thành luống và đung đưa nhẹ theo gió. Khi chưa có thành viên, cảnh chỉ có cây, cỏ, hàng rào và lối đi; không có hoa mẫu hoặc hoa trang trí. Tên chỉ hiện khi hover, chạm hoặc focus vào cụm hoa; Escape hay bấm ra ngoài để ẩn. Không có số người, tiêu đề hay bảng tìm kiếm. Mỗi người đi hết phần của mình rồi thấy vườn; không phải chờ cả lớp tham gia mới xem được.
+4. Nhấn OK hoặc Enter để vào sổ ảnh: 43 ảnh / 21 lượt xem, các cặp ảnh ngang 28–29, 33–34 và 41–42 được xếp chung một mặt giấy. Sau sổ ảnh là phong bì thiệp 20/10.
+5. Bấm mở phong bì để chọn ngẫu nhiên một trong 30 lời chúc, mỗi lần mở độc lập và có thể trùng. Lời chúc dùng hai từ cuối của tên, viết hoa đầu từ; tên đầy đủ vẫn dùng cho vườn hoa. Có thể tải thiệp PNG hoặc làm lại.
+6. Ở cuối thiệp, bấm **Tiếp tục**. Lúc này tên mới được gửi lên vườn chung. Vườn là cảnh minh họa toàn màn hình, mặc định không có chữ: mỗi bạn đã hoàn thành đóng góp một cụm hoa mọc trực tiếp trên cỏ, không giấy bọc hay nơ. Các cụm xếp sát, so le thành luống và đung đưa nhẹ theo gió. Khi chưa có thành viên, cảnh chỉ có cây, cỏ, hàng rào và lối đi; không có hoa mẫu hoặc hoa trang trí. Tên chỉ hiện khi hover, chạm hoặc focus vào cụm hoa; Escape hay bấm ra ngoài để ẩn. Không có số người, tiêu đề hay bảng tìm kiếm. Mỗi người đi hết phần của mình rồi thấy vườn; không phải chờ cả lớp tham gia mới xem được.
 7. Vườn tự cập nhật mỗi 5 giây khi đang mở. Hai nút biểu tượng nhỏ cho phép quay lại thiệp hoặc bật/tắt nhạc. Có thể cuộn khi nhiều cụm hoa; bố cục tự điều chỉnh theo kích thước màn hình. Nếu mất kết nối, xuất hiện nút biểu tượng thử lại; thông báo chi tiết dành cho trình đọc màn hình.
 
 Photograph dùng đúng file từ `thu/nhac`, âm lượng 16%, tăng dần trong 3,2 giây; có nút bật/tắt. Tên chỉ được gửi khi bấm hoàn thành ở cuối thiệp; tên và thời điểm tham gia được lưu để tạo vườn chung; tên hiển thị khi tương tác với cụm hoa tương ứng. Tên trùng nhau (không phân biệt hoa/thường, chuẩn hóa khoảng trắng) chỉ tạo một thành viên; nên nhập họ tên đầy đủ nếu có hai bạn cùng tên gọi. Hệ thống Giảm chuyển động sẽ tắt các hiệu ứng bay, bung nở và đung đưa.
@@ -67,7 +67,7 @@ Loại hoa hỗ trợ: `mix`, `daisy`, `tulip`, `ranunculus`, `cosmos`, `rose`, 
 
 ## Chỉnh nội dung
 
-- Lời chúc chung: phần `letter-body` và `letter-sign` trong `public/index.html`.
+- 30 lời chúc: `server/letter-catalog.mjs`, bản dễ đọc tại [NOI_DUNG_THIEP.md](NOI_DUNG_THIEP.md). Quy tắc tên gọi: `src/shared/personalization.mjs`. Chi tiết cơ chế hiện tại ở [PERSONALIZED_LETTERS.md](PERSONALIZED_LETTERS.md).
 - Màu chủ đạo: các biến trong `:root` ở `public/styles.css`.
 - Hoa riêng theo người: `public/flower-profiles.js`.
 - Cửa toàn màn hình và landing page: `public/experience.css`.

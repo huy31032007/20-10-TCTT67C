@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { turnTarget, dragIntent, dragProgress, shouldCompleteTurn } from '../src/album/page-turn.mjs';
-import { buildAlbumPages } from '../src/album/album-layout.mjs';
+import { buildAlbumPages, pagePresentation } from '../src/album/album-layout.mjs';
 
 test('page turns cannot cross either end or skip a spread', () => {
   assert.equal(turnTarget(0, -1, 24), null);
@@ -31,9 +31,12 @@ test('release finishes long drags and flicks but returns short or reversed drags
   assert.equal(shouldCompleteTurn(.6, -.5), false);
   assert.equal(shouldCompleteTurn(.9, -.5), true);
 });
-test('album grouping keeps all 43 reaction identities exactly once in 24 views', () => {
+test('album grouping keeps all 43 reaction identities exactly once in 21 views', () => {
   const pages = buildAlbumPages(Array.from({ length:43 }, () => ({})));
-  assert.equal(pages.length, 24);
+  assert.equal(pages.length, 21);
   assert(pages.every(page => page.length >= 1 && page.length <= 3));
   assert.deepEqual(pages.flat().sort((a,b) => a-b), Array.from({ length:43 }, (_, i) => i));
+  assert.deepEqual(pages.find(indices => indices.includes(32)), [32,33,34]);
+  assert.equal(pagePresentation([32,33,34], []).kind, 'compact');
+  assert.equal(pagePresentation([2,4,5], []).kind, 'trio');
 });

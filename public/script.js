@@ -4,7 +4,7 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const state = { name: '', screen: 'door', opening: false };
-const FLOW = ['door', 'name', 'album', 'envelope', 'letter', 'garden'];
+const FLOW = ['door', 'name', 'album', 'envelope', 'letter', 'garden', 'ticket'];
 const FLOWER_COLORS = ['#fffdf5', '#bca4d9', '#f2c76b', '#e9b7a5', '#f8f4e4', '#c6b2df', '#d6a6b0', '#e8bf6d'];
 let toastTimer;
 let openTimer;
@@ -275,7 +275,8 @@ $('#nameForm').addEventListener('submit', event => {
   $('#bouquetFor').textContent = name;
   $('#bouquetFor').hidden = false;
   $('#nameBouquet').innerHTML = bouquetSVG(name, { wrapped: true, animateFrom: Infinity });
-  $$('[data-personal-name]').forEach(el => { el.textContent = name; });
+  const friendlyName = window.ClassroomPersonalization.formatGreetingName(name);
+  $$('[data-personal-name]').forEach(el => { el.textContent = friendlyName; });
   $('#letterBouquet').innerHTML = bouquetSVG(name);
   nameWrapping = true;
   $('.name-screen').classList.add('is-wrapping');
@@ -291,7 +292,7 @@ function goTo(screen) {
   activeScreen.hidden = true;
   activeScreen = $(`.screen[data-screen="${screen}"]`);
   activeScreen.hidden = false;
-  $('.journey').hidden = ['door', 'name', 'album', 'garden'].includes(screen);
+  $('.journey').hidden = ['door', 'name', 'album', 'garden', 'ticket'].includes(screen);
   $('.name-screen').inert = screen !== 'name';
   const stepIndex = Math.max(0, Math.min(FLOW.indexOf(screen) - 1, 1));
   if (screen === 'door') {
@@ -332,48 +333,23 @@ function goTo(screen) {
   document.dispatchEvent(new CustomEvent('classroom:screen-changed', { detail: { screen } }));
 }
 
-$$('[data-back]').forEach(button => button.addEventListener('click', () => {
+$$('[data-back], [data-next]').forEach(button => button.addEventListener('click', () => {
   clearTimeout(openTimer);
-  goTo(button.dataset.back);
+  goTo(button.dataset.back || button.dataset.next);
 }));
 
-let letterVisitor;
-try { letterVisitor = localStorage.getItem('tctt67c-letter-visitor-v1'); } catch {}
-if (!/^[a-f0-9]{32}$/.test(letterVisitor || '')) {
-  letterVisitor = crypto.randomUUID().replaceAll('-', '');
-  try { localStorage.setItem('tctt67c-letter-visitor-v1', letterVisitor); } catch {}
-}
-let currentLetter = null, confirmingLetter = false;
-async function letterRequest(action, record) {
+async function letterRequest() {
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
   try {
-    const canonical = state.name.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi');
-    const visitor = record?.visitor || [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${letterVisitor}:${canonical}`)))].map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
     const response = await fetch('/api/letter', {
-      method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, visitor, ...(record ? { id: record.letter.id, cycle: record.cycle } : {}) })
+      method:'POST', credentials:'same-origin', cache:'no-store', signal:controller.signal,
+      headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ action:'reserve' })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Chưa lấy được thư. Cậu thử lại nhé.');
-    return { ...data, visitor };
+    return data;
   } finally { clearTimeout(timer); }
 }
-async function confirmLetter() {
-  if (!currentLetter || confirmingLetter) return;
-  const record = currentLetter;
-  confirmingLetter = true; $('#retryLetter').disabled = true;
-  try {
-    await letterRequest('open', record);
-    if (currentLetter === record) { $('#letterStatus').textContent = ''; $('#retryLetter').hidden = true; }
-  } catch (error) {
-    if (currentLetter === record) {
-      $('#letterStatus').textContent = error.name === 'AbortError' ? 'Chưa ghi nhận được lượt mở. Cậu thử lại khi có mạng nhé.' : error.message;
-      $('#retryLetter').hidden = false;
-    }
-  } finally { confirmingLetter = false; $('#retryLetter').disabled = false; }
-}
-$('#retryLetter').addEventListener('click', confirmLetter);
 async function openLetter() {
   if (state.opening) return;
   state.opening = true;
@@ -381,11 +357,10 @@ async function openLetter() {
   $('#openLetter').disabled = true;
   $('#envelopeStatus').textContent = 'Đang lấy một bức thư…';
   try {
-    const record = await letterRequest('reserve');
+    const record = await letterRequest();
     if (state.screen !== 'envelope') return;
-    currentLetter = record;
     $('#letterBody').replaceChildren(...record.letter.paragraphs.map(text => {
-      const p = document.createElement('p'); p.textContent = text; return p;
+      const p = document.createElement('p'); p.textContent = window.ClassroomPersonalization.personalizeText(text, state.name); return p;
     }));
     $('#letterSignature').textContent = record.letter.signature;
     $('#letterStatus').textContent = ''; $('#retryLetter').hidden = true;
@@ -395,10 +370,6 @@ async function openLetter() {
     window.ClassroomEffects?.letterPetals();
     openTimer = setTimeout(() => {
       goTo('letter');
-      // Confirm after the card is visible, not while browsing the album.
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (state.screen === 'letter' && currentLetter === record) confirmLetter();
-      }));
     }, reducedMotion.matches ? 50 : 1100);
   } catch (error) {
     if (state.screen === 'envelope') {

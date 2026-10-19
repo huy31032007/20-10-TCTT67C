@@ -1,4 +1,6 @@
-# Sổ ảnh, 60 thiệp và vườn lớp
+# Lịch sử sổ ảnh, thiệp và vườn lớp
+
+**Trạng thái hiện tại:** 30 lời chúc người dùng cung cấp, chọn ngẫu nhiên độc lập và cho phép trùng; không giữ thư hoặc đếm vòng nữa. Xem [PERSONALIZED_LETTERS.md](PERSONALIZED_LETTERS.md) và [NOI_DUNG_THIEP.md](NOI_DUNG_THIEP.md). Sổ đã gộp ảnh ngang thành 21 lượt xem, vẫn đủ 43 ảnh; xem [PHOTO_GROUPING.md](PHOTO_GROUPING.md). Các mục 60 thư/24 trang bên dưới là lịch sử.
 
 Trạng thái giao diện mới nhất: xem `RESTORED_SCRAPBOOK.md` (khôi phục tờ giấy có ảnh và trang trí trước refactor, giữ toàn bộ phần cảm xúc/âm thanh/cánh hoa mới). Các ghi nhận dưới đây lưu lịch sử những bước trước.
 

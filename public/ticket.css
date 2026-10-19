@@ -1,0 +1,75 @@
+/* The garden remains a scene; its final arrow opens the ticket on demand. */
+.garden-next { position:fixed; z-index:100; right:max(22px,env(safe-area-inset-right)); bottom:max(76px,calc(env(safe-area-inset-bottom) + 60px)); width:44px; height:44px; box-shadow:0 4px 18px #34463e1a; }
+body[data-view=ticket] { background-color:#f4f4ed; background-image:radial-gradient(ellipse at 7% 9%,#f8e2d994,transparent 50%),radial-gradient(ellipse at 90% 22%,#dcece67d,transparent 56%),radial-gradient(ellipse at 46% 100%,#e7dff07d,transparent 60%); background-size:100% 100%; }
+body[data-view=ticket] .site-header,body[data-view=ticket] .site-footer,body[data-view=ticket] .page-sparkles,body[data-view=ticket] #cursorStars { display:none; }
+body[data-view=ticket] #app { max-width:1280px; margin:0 auto; width:100%; }
+.ticket-screen { margin:0; padding:24px; min-height:100svh; animation:none; overflow-x:clip; }
+.ticket-shell { min-height:calc(100svh - 48px); display:flex; flex-direction:column; }
+.ticket-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ticket-control { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:9px 15px; color:#4d6657; border:1px solid #aebfa566; border-radius:30px; background:#fffdf54d; font-size:12px; }
+.ticket-control svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+.ticket-audio { width:44px; padding:10px; }
+.ticket-control:focus-visible,.lbp-side-button:focus-visible { outline:2px solid #7b65ae; outline-offset:5px; }
+.ticket-center { flex:1; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:64px 20px 90px; }
+.ticket-hint { margin:26px 0 0; text-align:center; color:#747b6b; font-size:11px; line-height:1.8; }
+.ticket-screen .lbp { isolation:isolate; }
+.ticket-screen .lbp svg { stroke:none; }
+.ticket-screen .lbp-layer { width:100%; height:100%; }
+.ticket-screen .lbp-grain { opacity:.055; }
+.ticket-screen .lbp-piece .lbp-grain { opacity:.09; }
+.ticket-screen .lbp-side-switch { display:flex; align-items:center; justify-content:center; gap:28px; margin-top:28px; }
+.ticket-screen .lbp-side-button { display:flex; align-items:center; gap:8px; min-height:44px; padding:7px 3px; border:0; background:transparent; color:#67725f; font-family:'Courier New',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+.ticket-screen .lbp-side-button.is-active { color:#34463e; }
+.ticket-screen .lbp-side-rule { height:1px; width:8px; background:currentColor; opacity:.5; transition:width .35s,opacity .35s; }
+.ticket-screen .lbp-side-button.is-active .lbp-side-rule { width:24px; opacity:1; }
+/* Keep the supplied moon/stub composition, with one clear placeholder. */
+.class-coming-soon .lbp-word-first,.class-coming-soon .lbp-word-second { top:36%!important; font-size:7cqw!important; font-weight:500!important; letter-spacing:-.055em; }
+.class-coming-soon .lbp-word-first { left:26%!important; right:auto!important; }
+.class-coming-soon .lbp-word-second { left:auto!important; right:4%!important; }
+.class-coming-soon .lbp-rocket { transform:translateY(34px); }
+.class-coming-soon .lbp-clarinet { transform:translateY(-8px); }
+.class-coming-soon .lbp-grid .lbp-l,.class-coming-soon .lbp-grid .lbp-m { white-space:normal; overflow-wrap:anywhere; }
+.class-coming-soon .lbp-night>.lbp-pre:first-of-type { letter-spacing:0; }
+.class-coming-soon .lbp-foot .lbp-d { font-size:3.9cqw!important; letter-spacing:-.04em; font-weight:500; }
+.lbp.is-paused * { animation-play-state:paused!important; }
+.lbp.is-back .lbp-tw { animation-play-state:paused; }
+@media(max-width:650px) {
+  .garden-next { right:max(16px,env(safe-area-inset-right)); bottom:max(76px,calc(env(safe-area-inset-bottom) + 60px)); }
+  .ticket-screen { padding:16px 12px; }
+  .ticket-shell { min-height:calc(100svh - 32px); }
+  .ticket-center { padding:56px 4px 80px; }
+  .ticket-hint { max-width:260px; margin-top:20px; font-size:11px; }
+  .ticket-screen .lbp-stage { aspect-ratio:1000 / 560!important; }
+  .class-coming-soon .lbp-word-first,.class-coming-soon .lbp-word-second { font-size:8.2cqw!important; top:38%!important; }
+  .class-coming-soon .lbp-word-first { left:26%!important; }
+  .class-coming-soon .lbp-word-second { right:3%!important; }
+  .class-coming-soon .lbp-head { align-items:center; min-height:24px; }
+  .class-coming-soon .lbp-head>span:first-child { font-size:9px!important; }
+  .class-coming-soon .lbp-head>span:nth-child(2) { font-size:10px!important; }
+  .class-coming-soon .lbp-head>span:last-child { display:none; }
+  .class-coming-soon .lbp-grid { grid-template-columns:minmax(0,1fr); }
+  .class-coming-soon .lbp-grid>.lbp-cell { padding:10px 0 8px; border:0; }
+  .class-coming-soon .lbp-grid>.lbp-cell:not(:first-child) { display:none; }
+  .class-coming-soon .lbp-grid .lbp-l { font-size:9px; margin-bottom:5px; }
+  .class-coming-soon .lbp-grid .lbp-m { font-size:12px!important; line-height:1.2; }
+  .class-coming-soon .lbp-foot>div:first-child { display:none; }
+  .class-coming-soon .lbp-foot>div:last-child>div:first-child { display:none; }
+  .class-coming-soon .lbp-foot .lbp-d { font-size:6.5cqw!important; }
+  .class-coming-soon .lbp-stub>.lbp-c { font-size:8px!important; line-height:1.4; }
+  .class-coming-soon .lbp-stub .lbp-l { font-size:6px; white-space:normal; }
+  .class-coming-soon .lbp-stub .lbp-m { font-size:8px!important; line-height:1.3; }
+  .class-coming-soon .lbp-stub .lbp-sf:not(:nth-child(4)) { display:none!important; }
+  .class-coming-soon .lbp-hint { font-size:7px; bottom:8px; letter-spacing:.1em; }
+  .class-coming-soon .lbp-stamp { left:13%; top:50%; }
+  .class-coming-soon .lbp-stamp>span>.lbp-c { font-size:6cqw!important; }
+  .class-coming-soon .lbp-stamp>span>.lbp-m { font-size:1.7cqw!important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .ticket-screen * { animation:none!important; transition:none!important; }
+}
+
+.lbp-side-button:disabled { cursor:wait; opacity:.5; }
+
+/* Placeholder copy should be readable immediately after the flip. */
+.class-coming-soon .lbp-v { animation:none!important; clip-path:none!important; }
+@media(max-width:650px) { .class-coming-soon .lbp-stub.is-torn { transform:translate(1cqw,2cqw) rotate(2deg); } }

@@ -53,11 +53,11 @@ test('retrying an identical reaction is idempotent and only its visitor can remo
   assert.equal(app.writes(), 3);
   assert.deepEqual(Object.keys(await (await app.serve(read(1))).json()).sort(), ['counts','photo','revision']);
 });
-test('reactions, garden joins, protected admin deletion and letter rounds preserve each other', async () => {
+test('random letters do not change shared reactions, garden joins or protected deletion', async () => {
   const app = setup(), garden = createGardenHandler(app.store, { sleep:async () => {} });
   await app.serve(vote(1));
   const joined = await (await garden(new Request(origin + '/api/garden', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ name:'Kiểm thử Lan' }) }))).json();
-  const letters = createLetterHandler(app.store, { pick:() => 0, sleep:async () => {} });
+  const letters = createLetterHandler({ pick:() => 0 });
   const letter = await (await letters(new Request(origin + '/api/letter', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ visitor:visitor(1), action:'reserve' }) }))).json();
   await app.serve(vote(2, { emoji:2 }));
   const secret = 'local-reaction-admin-test-secret-only';
