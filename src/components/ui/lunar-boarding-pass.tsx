@@ -945,7 +945,7 @@ export default function LunarBoardingPass({
                   <div className="lbp-cell">
                     <Field label="Ngày hẹn" value={dateCode} size={1.45} d={0.4} />
                   </div>
-                  <div className="lbp-cell lbp-row">
+                  <div className="lbp-cell lbp-row lbp-route">
                     <Field label="Từ" value={from} size={1.3} d={0.55} />
                     <Field label="Đến" value={to} size={1.3} d={0.65} />
                   </div>
@@ -1002,7 +1002,7 @@ export default function LunarBoardingPass({
                 <span className="lbp-sf" style={{ display: "block" }}>
                   <Field label="Dành cho" value={passenger} size={1.25} d={0.3} />
                 </span>
-                <span className="lbp-sf lbp-row" style={{ display: "flex", gap: "2cqw" }}>
+                <span className="lbp-sf lbp-row lbp-route" style={{ display: "flex", gap: "2cqw" }}>
                   <Field label="Từ" value={from} size={1.2} d={0.45} />
                   <Field label="Đến" value={to} size={1.2} d={0.55} />
                 </span>

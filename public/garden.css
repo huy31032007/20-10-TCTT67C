@@ -10,7 +10,7 @@ body[data-view="garden"] #app { max-width:none; margin:0; padding:0; }
 .garden-bouquet { position:absolute; aspect-ratio:460/485; transform:translateX(-50%) rotate(var(--tilt,0deg)); animation:bouquet-arrive 1.3s ease both; contain:layout style; }
 .garden-bouquet { cursor:pointer; }
 .garden-bouquet.is-name-visible { z-index:90!important; }
-.garden-bouquet-name { position:absolute; top:4%; left:50%; transform:translateX(-50%) rotate(calc(-1 * var(--tilt,0deg))); width:max-content; max-width:min(220px,100%); box-sizing:border-box; padding:7px 12px; border:1px solid #ffffffc9; border-radius:12px; background:#fffdf5f5; color:#4b6148; box-shadow:0 4px 14px #45543824; font-size:14px; line-height:1.4; text-align:center; overflow-wrap:anywhere; pointer-events:none; }
+.garden-bouquet-name { position:absolute; top:4%; left:50%; transform:translateX(calc(-50% + var(--name-shift,0px))) rotate(calc(-1 * var(--tilt,0deg))); width:max-content; max-width:min(220px,calc(100vw - 32px)); box-sizing:border-box; padding:7px 12px; border:1px solid #ffffffc9; border-radius:12px; background:#fffdf5f5; color:#4b6148; box-shadow:0 4px 14px #45543824; font-size:14px; line-height:1.4; text-align:center; overflow-wrap:anywhere; pointer-events:none; }
 .garden-bouquet-name[hidden] { display:none; }
 .garden-bouquet::after { content:''; position:absolute; z-index:-1; left:44%; right:44%; bottom:2%; height:3%; border-radius:50%; background:#576d4e22; filter:blur(5px); }
 .garden-bouquet-sway { width:100%; height:100%; transform-origin:50% 94%; animation:garden-bouquet-breeze var(--breeze-time,6s) ease-in-out var(--breeze-delay,0s) infinite; }
@@ -37,6 +37,21 @@ body[data-view="garden"] #app { max-width:none; margin:0; padding:0; }
 .garden-clouds { animation:garden-cloud-drift 25s ease-in-out infinite alternate; }
 .garden-butterfly { transform-box:fill-box; transform-origin:center; animation:garden-butterfly-drift 9s ease-in-out infinite; }
 .garden-butterfly.second { animation-delay:-4s; }
+.garden-bird-flight { transform:translate(-80px,0); animation:garden-bird-cross var(--bird-time,36s) linear var(--bird-delay,-8s) infinite; }
+.garden-bird-wings { transform-box:fill-box; transform-origin:center; animation:garden-bird-flap 1.1s ease-in-out infinite alternate; }
+.garden-flower-visitor { pointer-events:none; user-select:none; }
+.garden-visitor-scale { transform:scale(var(--visitor-scale,1.5)); }
+.garden-visitor-flight { animation:garden-butterfly-visit var(--visit-time,24s) ease-in-out var(--visit-delay,0s) infinite; }
+.garden-landing-heart { opacity:0; animation:garden-heart-rise var(--visit-time,24s) ease-out var(--visit-delay,0s) infinite; }
+.garden-visitor-wing { transform-box:fill-box; stroke:#8a8072; stroke-width:.7; stroke-opacity:.55; animation:garden-visitor-flutter 1.2s ease-in-out infinite alternate; }
+.garden-visitor-wing.left { transform-origin:right center; }
+.garden-visitor-wing.right { transform-origin:left center; }
+body:not([data-view=garden]) .garden-screen *,.garden-motion-paused * { animation-play-state:paused!important; }
+@keyframes garden-bird-cross { 0%{transform:translate(-80px,12px)} 35%{transform:translate(500px,-25px)} 70%{transform:translate(1070px,9px)} 100%{transform:translate(1530px,-18px)} }
+@keyframes garden-bird-flap { to{transform:scaleY(.35)} }
+@keyframes garden-butterfly-visit { 0%,8%{opacity:0;transform:translate(-110px,-85px) rotate(-16deg)} 22%{opacity:.95;transform:translate(-45px,-28px) rotate(8deg)} 38%{transform:translate(10px,-8px) rotate(-8deg)} 45%,76%{opacity:.95;transform:translate(0,0) rotate(0)} 89%{opacity:.85;transform:translate(70px,-48px) rotate(12deg)} 100%{opacity:0;transform:translate(145px,-115px) rotate(-10deg)} }
+@keyframes garden-heart-rise { 0%,44%{opacity:0;transform:translate(0,-8px) scale(.5)} 46%{opacity:.85;transform:translate(1px,-17px) scale(.8)} 54%,100%{opacity:0;transform:translate(7px,-62px) scale(1)} }
+@keyframes garden-visitor-flutter { from{transform:scaleX(.45)} to{transform:scaleX(1)} }
 @keyframes garden-reveal { from{opacity:0} to{opacity:1} }
 @keyframes bouquet-arrive { from{opacity:0;translate:0 18px} to{opacity:1;translate:0 0} }
 @keyframes garden-bouquet-breeze { 0%,100%{transform:rotate(-.9deg)} 50%{transform:rotate(1deg)} }

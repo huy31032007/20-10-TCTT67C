@@ -1,6 +1,6 @@
-/* A visible label and arrow make the final step discoverable without hover. */
-.garden-next { position:fixed; z-index:100; right:max(22px,env(safe-area-inset-right)); top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; justify-content:center; gap:12px; width:auto; height:52px; padding:0 18px; border:1px solid #7e947180; border-radius:30px; background:#fffdf5f5; color:#4b6148; font-size:15px; font-weight:600; white-space:nowrap; box-shadow:0 5px 20px #34463e24; backdrop-filter:none; }
-.garden-next svg { width:24px; height:24px; stroke-width:2; }
+/* Compact navigation stays above the flowers, with a screen-reader label. */
+.garden-next { position:fixed; z-index:100; right:max(22px,env(safe-area-inset-right)); top:max(72px,calc(30svh - 22px)); bottom:auto; transform:none; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; padding:0; border:1px solid #7e947180; border-radius:50%; background:#fffdf5f5; color:#4b6148; box-shadow:0 5px 20px #34463e24; backdrop-filter:none; }
+.garden-next svg { width:21px; height:21px; stroke-width:2; }
 .garden-next:hover { background:#fffdf5; box-shadow:0 6px 22px #34463e33; }
 body[data-view=ticket] { background-color:#f4f4ed; background-image:radial-gradient(ellipse at 7% 9%,#f8e2d994,transparent 50%),radial-gradient(ellipse at 90% 22%,#dcece67d,transparent 56%),radial-gradient(ellipse at 46% 100%,#e7dff07d,transparent 60%); background-size:100% 100%; }
 body[data-view=ticket] .site-header,body[data-view=ticket] .site-footer,body[data-view=ticket] .page-sparkles,body[data-view=ticket] #cursorStars { display:none; }
@@ -31,12 +31,15 @@ body[data-view=ticket] #app { max-width:1280px; margin:0 auto; width:100%; }
 .class-coming-soon .lbp-rocket { transform:translateY(34px); }
 .class-coming-soon .lbp-clarinet { transform:translateY(-8px); }
 .class-coming-soon .lbp-grid .lbp-l,.class-coming-soon .lbp-grid .lbp-m { white-space:normal; overflow-wrap:anywhere; }
+.class-coming-soon .lbp-route>span:first-child { flex:none; }
+.class-coming-soon .lbp-route>span:last-child { flex:1; min-width:0; }
+.class-coming-soon .lbp-stub .lbp-m { white-space:normal; overflow-wrap:anywhere; }
 .class-coming-soon .lbp-night>.lbp-pre:first-of-type { letter-spacing:0; }
 .class-coming-soon .lbp-foot .lbp-d { font-size:3.9cqw!important; letter-spacing:-.04em; font-weight:500; }
 .lbp.is-paused * { animation-play-state:paused!important; }
 .lbp.is-back .lbp-tw { animation-play-state:paused; }
 @media(max-width:650px) {
-  .garden-next { top:auto; right:max(16px,env(safe-area-inset-right)); bottom:max(76px,calc(env(safe-area-inset-bottom) + 60px)); transform:none; height:48px; padding-inline:16px; }
+  .garden-next { right:max(16px,env(safe-area-inset-right)); }
   .ticket-screen { padding:16px 12px; }
   .ticket-shell { min-height:calc(100svh - 32px); }
   .ticket-center { padding:56px 4px 80px; }

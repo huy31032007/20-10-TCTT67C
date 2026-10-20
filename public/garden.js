@@ -5,12 +5,18 @@
   let revision = -1, members = [], previousScreen = 'letter';
   let refreshTimer, refreshInFlight = null, joinInFlight = false, pendingName = '';
   const plants = new Map(), touchTimers = new Map();
+  let lastLayoutKey = '';
   let namedPlant = null;
   function showName(plant) {
     if (namedPlant && namedPlant !== plant) hideName(namedPlant);
     namedPlant = plant;
     plant.classList.add('is-name-visible');
-    plant.querySelector('.garden-bouquet-name').hidden = false;
+    const name = plant.querySelector('.garden-bouquet-name');
+    name.hidden = false;
+    name.style.setProperty('--name-shift','0px');
+    const bounds = name.getBoundingClientRect();
+    const shift = Math.max(8 - bounds.left,0) - Math.max(bounds.right - window.innerWidth + 8,0);
+    name.style.setProperty('--name-shift',`${shift}px`);
   }
   function hideName(plant = namedPlant) {
     if (!plant) return;
@@ -27,6 +33,7 @@
     el('gardenScenery').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1000" preserveAspectRatio="none"><defs><linearGradient id="gs-sky" x2="0" y2="1"><stop stop-color="#e7edf0"/><stop offset=".55" stop-color="#f9edda"/><stop offset="1" stop-color="#f4e8d5"/></linearGradient><linearGradient id="gs-ground" x2=".2" y2="1"><stop stop-color="#d8dfb6"/><stop offset="1" stop-color="#aebf91"/></linearGradient><radialGradient id="gs-glow"><stop stop-color="#fff4cc" stop-opacity=".9"/><stop offset="1" stop-color="#fff3ce" stop-opacity="0"/></radialGradient><filter id="gs-soft"><feGaussianBlur stdDeviation="14"/></filter></defs>
       <path fill="url(#gs-sky)" d="M0 0h1440v1000H0z"/><circle cx="1060" cy="180" r="250" fill="url(#gs-glow)"/><circle cx="1060" cy="180" r="48" fill="#fff4d1"/>
       <g class="garden-clouds" fill="#fffbf2" opacity=".7"><path d="M255 156c-28-4-28-32-2-36 5-37 58-36 66-10 32-16 63 10 48 32 28 1 26 23 1 24Z"/><path d="M667 104c-25-4-18-29 4-26 2-25 38-33 52-10 32-11 50 13 39 25 24 13 7 25-16 22Z"/></g>
+      <g fill="none" stroke="#7b8970" stroke-width="2.4" stroke-linecap="round" opacity=".6">${[145,230,105,285].map((y,i)=>`<g transform="translate(0 ${y})"><g class="garden-bird-flight" style="--bird-time:${35 + i*7}s;--bird-delay:${-8 - i*11}s"><g transform="scale(${.75 + i*.08})"><path class="garden-bird-wings" d="M-13 2Q-7-7 0 2Q7-7 13 2"/></g></g></g>`).join('')}</g>
       <path d="M0 413Q170 330 359 391T720 374T1050 393T1440 358V1000H0Z" fill="#d4dcc2"/><path d="M0 486Q200 402 420 458T866 429T1440 450V1000H0Z" fill="#c3d0af"/>
       <g opacity=".8"><path d="M0 426H1440M0 451H1440" stroke="#f7f0d9" stroke-width="8"/>${fence}</g>
       <path d="M0 520Q320 445 662 511T1440 493V1000H0Z" fill="url(#gs-ground)"/><path d="M820 475Q660 581 789 670T632 1000H1040Q1049 856 866 737T880 475Z" fill="#e6d9b7"/><path d="M837 486Q726 581 817 671T861 800" fill="none" stroke="#f4e6c9" stroke-width="17" opacity=".65"/>
@@ -42,31 +49,39 @@
   function layout() {
     const width = el('gardenLandscape').clientWidth;
     if (!width) return;
+    const key = `${width}/${window.innerHeight}/${members.map(member => member.id).join(',')}`;
+    if (key === lastLayoutKey) return;
     const compact = width < 650;
-    const columns = Math.min(10, Math.max(2, Math.floor(width * .9 / (compact ? 105 : 110))));
-    const rows = Math.max(1, Math.ceil(members.length / columns));
-    const perRow = Math.ceil(members.length / rows) || 1;
-    const viewport = Math.max(window.innerHeight, 620);
-    // Give every clump its own footprint; reserve room for the sway at the edges.
-    const padding = Math.max(22, width * .07);
-    const nominalSize = Math.min(compact ? 185 : 230, (width - padding * 2) / ((perRow - 1) * .82 + 1));
-    const spacing = Math.max(105, nominalSize * .77);
-    const start = viewport * (compact ? .71 : .64);
+    const { items, height, frameHeight } = window.ClassroomGardenLayout.gardenLayout(members, width, window.innerHeight);
     el('gardenLandscape').classList.toggle('has-members', members.length > 0);
-    el('gardenLandscape').style.setProperty('--garden-frame', `${viewport}px`);
+    el('gardenLandscape').style.setProperty('--garden-frame', `${frameHeight}px`);
     el('gardenScenery').querySelector('svg').setAttribute('preserveAspectRatio', compact ? 'xMidYMid slice' : 'none');
-    el('gardenLandscape').style.height = `${Math.max(viewport, start + (rows - 1) * spacing + 90)}px`;
-    members.forEach((member, index) => {
-      const row = Math.floor(index / perRow), count = Math.min(perRow, members.length - row * perRow);
-      const seed = hash(member.id);
-      const size = nominalSize * (.94 + seed % 7 / 100);
-      const step = nominalSize * .82;
-      const offset = (index % perRow - (count - 1) / 2) * step + (row % 2 ? 5 : -5);
-      const x = width / 2 + offset;
-      const y = start + row * spacing + Math.cos(offset / width * Math.PI * 1.5) * 24 + seed % 11;
-      const plant = plants.get(member.id);
-      Object.assign(plant.style, { left: `${x}px`, top: `${y - size * (485 / 460)}px`, width: `${size}px`, zIndex: String(10 + row), '--tilt': `${seed % 5 - 2}deg`, '--breeze-delay': `${seed % 60 * -.1}s`, '--breeze-time': `${5.5 + seed % 20 * .1}s` });
+    el('gardenLandscape').style.height = `${height}px`;
+    items.forEach(({ id, x, y, size, zIndex }) => {
+      const seed = hash(id);
+      const plant = plants.get(id);
+      Object.assign(plant.style, { left: `${x}px`, top: `${y}px`, width: `${size}px`, zIndex: String(zIndex) });
+      for (const [property,value] of Object.entries({ '--tilt': `${seed % 5 - 2}deg`, '--breeze-delay': `${seed % 60 * -.1}s`, '--breeze-time': `${5.5 + seed % 20 * .1}s`, '--visitor-scale': String(Math.max(1.15, Math.min(6,320 / size))) })) {
+        plant.style.setProperty(property,value);
+      }
     });
+    lastLayoutKey = key;
+  }
+
+  function settleButterflies() {
+    const visiting = new Map(members.slice(0,6).map((member,index) => [member.id,index]));
+    for (const [id, plant] of plants) {
+      const visitor = plant.querySelector('.garden-flower-visitor');
+      if (!visiting.has(id)) { visitor?.remove(); continue; }
+      if (visitor) continue;
+      const heads = plant.querySelectorAll('.bouquet-flower');
+      if (!heads.length) continue;
+      const seed = hash(id);
+      const duration = 20 + seed % 7;
+      // Stagger arrivals, keeping several visitors visible together from the start.
+      const delay = -duration * (.18 + visiting.get(id) * .13);
+      heads[seed % heads.length].insertAdjacentHTML('beforeend', `<g class="garden-flower-visitor" aria-hidden="true" transform="translate(0 -18)" style="--visit-time:${duration}s;--visit-delay:${delay}s"><g class="garden-visitor-scale"><g class="garden-visitor-flight"><path class="garden-visitor-wing left" d="M0 0C-27-24-29 12-2 8C-19 23-17 31 0 10Z" fill="#d6b9d9"/><path class="garden-visitor-wing right" d="M0 0C27-24 29 12 2 8C19 23 17 31 0 10Z" fill="#edcea0"/><path d="M0-3V13M0-2l-5-5m5 5 5-5" fill="none" stroke="#8a8072" stroke-width="2" stroke-linecap="round"/></g><path class="garden-landing-heart" d="M0-7C-11-19-20-3 0 9C20-3 11-19 0-7Z" fill="#d6b9d9"/></g></g>`);
+    }
   }
 
   async function request(method = 'GET', body) {
@@ -123,7 +138,7 @@
       });
       plants.set(member.id,plant); el('gardenPlots').appendChild(plant);
     }
-    layout();
+    settleButterflies(); layout();
   }
   function scheduleRefresh() {
     clearTimeout(refreshTimer);
@@ -163,6 +178,7 @@
     await joining; refresh();
   }
   scenery();
+  el('gardenScreen').classList.toggle('garden-motion-paused',document.hidden);
   document.querySelectorAll('[data-open-garden]').forEach(button => button.addEventListener('click',openGarden));
   el('gardenReturn').addEventListener('click',() => app.navigate(previousScreen === 'garden' ? 'letter' : previousScreen));
   el('retryGardenJoin').addEventListener('click',refresh);
@@ -180,7 +196,10 @@
   });
   document.addEventListener('pointerdown', event => { if (namedPlant && !namedPlant.contains(event.target)) hideName(); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') hideName(); });
-  document.addEventListener('visibilitychange',() => { if (!document.hidden && app.getScreen() === 'garden') refresh(); });
+  document.addEventListener('visibilitychange',() => {
+    el('gardenScreen').classList.toggle('garden-motion-paused',document.hidden);
+    if (!document.hidden && app.getScreen() === 'garden') refresh();
+  });
   new ResizeObserver(layout).observe(el('gardenPlots'));
   window.addEventListener('resize',layout);
 })();

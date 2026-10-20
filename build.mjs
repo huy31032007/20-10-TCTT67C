@@ -6,9 +6,10 @@ const source = new URL('./public/', root);
 const out = new URL('./dist/', root);
 await build({ entryPoints:[fileURLToPath(new URL('./src/album/index.jsx', root))], outfile:fileURLToPath(new URL('./public/album.js', root)), bundle:true, minify:true, format:'iife', target:'es2022', define:{ 'process.env.NODE_ENV':'"production"' }, legalComments:'eof', banner:{ js:'/* Generated from src/album/index.jsx by npm run build. Edit src/album/, not this file. */' } });
 await build({ entryPoints:[fileURLToPath(new URL('./src/shared/personalization.mjs', root))], outfile:fileURLToPath(new URL('./public/personalization.js', root)), bundle:true, minify:true, format:'iife', globalName:'ClassroomPersonalization', target:'es2022', banner:{ js:'/* Generated from src/shared/personalization.mjs by npm run build. */' } });
+await build({ entryPoints:[fileURLToPath(new URL('./src/shared/garden-layout.mjs', root))], outfile:fileURLToPath(new URL('./public/garden-layout.js', root)), bundle:true, minify:true, format:'iife', globalName:'ClassroomGardenLayout', target:'es2022', banner:{ js:'/* Generated from src/shared/garden-layout.mjs by npm run build. */' } });
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
-for (const file of ['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'personalization.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js', 'fonts', 'nhac', 'admin.html', 'admin.css', 'admin.js', 'album.css', 'album.js', 'album-data.js', 'photos', 'interactions.css', 'ticket.css', 'effects.js', 'paper-grain.png']) {
+for (const file of ['index.html', 'styles.css', 'experience.css', 'garden.css', 'script.js', 'personalization.js', 'garden-layout.js', 'garden.js', 'bouquet.js', 'flower-profiles.js', 'favicon.svg', 'html2canvas.min.js', 'fonts', 'nhac', 'admin.html', 'admin.css', 'admin.js', 'album.css', 'album.js', 'album-data.js', 'photos', 'interactions.css', 'ticket.css', 'effects.js', 'paper-grain.png']) {
   await cp(new URL(file, source), new URL(file, out), { recursive: true });
 }
 console.log(`Built static assets: ${fileURLToPath(out)}`);

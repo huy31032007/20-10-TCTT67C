@@ -20,7 +20,7 @@ function TicketViewer() {
       <LunarBoardingPass className="class-coming-soon" title="TCTT67C" tier="20/10" date="SOON"
         welcome={'HẸN\nSỚM'} eyebrow={'MỘT ĐIỀU MỚI\nĐANG CHỜ'} words={['COMING', 'SOON']}
         notes={['TCTT67C · 20/10', 'HẸN GẶP LẠI']} passenger={window.ClassroomApp.getName() || 'BẠN CÙNG LỚP'}
-        from="TCTT67C" to="HẸN SỚM" craft="TCTT67C" dateCode="COMING SOON" boardingTime="COMING SOON"
+        from="TCTT67C" to="Các bạn nữ TCTT67C" craft="TCTT67C" dateCode="COMING SOON" boardingTime="COMING SOON"
         gate="—" group="67C" seat="—" site="SẮP BẬT MÍ" seq="TCTT67C — TO BE CONTINUED"
         featuring="HẸN CẬU Ở ĐIỀU TIẾP THEO" headline="COMING SOON" stamp="HẸN SỚM"
         sideLabels={['Mặt trước', 'Mặt sau']} showCoordinates={false}
