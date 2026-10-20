@@ -3,11 +3,14 @@ import { m, useTransform } from 'framer-motion';
 import { PageDoodles, PaperClip } from './Decorations.jsx';
 import { PolaroidCard } from './PolaroidCard.jsx';
 import { pagePresentation } from './album-layout.mjs';
+import { photoPageCaption } from './album-captions.mjs';
 
 export function AlbumSheet({ photo, index, slot = 0, onPhoto, enabled, reduced, canHover, still = false }) {
-  return <div className={`album-sheet album-sheet-${slot ? 'right' : 'left'}`} style={{ '--sticker-delay':`${index % 6 * -1.3}s` }}>
+  const note = photoPageCaption(index);
+  return <div className={`album-sheet album-sheet-${slot ? 'right' : 'left'}${note?.text ? ' has-page-note' : ''}${note?.text.length > 24 ? ' has-long-note' : ''}`} style={{ '--sticker-delay':`${index % 6 * -1.3}s` }}>
     <PaperClip/><PageDoodles index={index}/>
     <PolaroidCard photo={photo} index={index} slot={slot} onPhoto={onPhoto} enabled={enabled} reduced={reduced} canHover={canHover} still={still}/>
+    {note?.text && <p className="album-page-note" data-caption-page={note.page}>{note.text}</p>}
   </div>;
 }
 

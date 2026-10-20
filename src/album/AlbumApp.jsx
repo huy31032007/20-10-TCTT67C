@@ -176,7 +176,7 @@ function StoryViewer({ initialPage, onPageChange }) {
     <FilmGrain/>
     <div className="album-top">
       <button className="album-icon" type="button" data-back="name" aria-label="Quay lại nhập tên" onClick={() => window.ClassroomApp.navigate('name')}><Icon name="back"/></button>
-      <div className="album-heading"><span>TCTT67C</span><h2>Sổ kỷ niệm</h2></div>
+      <div className="album-heading"><span>TCTT67C</span></div>
       <div className="album-tools">
         <button className="album-icon" type="button" aria-label={automatic && !paused ? 'Tạm dừng trình chiếu' : 'Tiếp tục trình chiếu'} aria-pressed={automatic && !paused} onClick={toggleStory}><Icon name={automatic && !paused ? 'pause' : 'play'}/></button>
         {automatic && <button className="album-icon" type="button" aria-label="Lật sổ bằng tay" onClick={stopStory}><Icon name="book"/></button>}

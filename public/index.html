@@ -93,6 +93,7 @@
     </section>
 
     <section class="screen letter-screen" data-screen="letter" aria-labelledby="letterTitle" hidden>
+      <button class="button button-secondary letter-album-return" type="button" data-back="album" aria-label="Quay lại sổ ảnh">← Sổ ảnh</button>
       <div class="letter-paper" id="letterCapture">
         <div class="letter-content"><div class="letter-topline"><span>GỬI CẬU, TỪ TCTT67C</span><span>20 / 10</span></div><p class="letter-kicker">Một lời chúc từ các bạn nam,</p><h2 id="letterTitle" tabindex="-1">Chúc mừng<br><span class="handwritten">20/10!</span></h2><p class="letter-salutation" hidden>Gửi <strong data-personal-name></strong>,</p><div class="letter-body" id="letterBody"></div><div class="letter-sign"><span id="letterSignature">Từ các bạn nam TCTT67C</span><strong class="handwritten">20/10 vui nhé! <span>✳</span></strong></div></div>
         <div class="letter-art"><span class="letter-date">20<span>tháng</span>10</span><div id="letterBouquet" class="bouquet-art" aria-hidden="true"></div><p class="handwritten">Một phần của<br>vườn hoa lớp mình.</p><span class="letter-art-star" aria-hidden="true">✦</span><span class="letter-postmark">CLASS<br><b>20/10</b><br>20 · 10</span></div>
@@ -112,7 +113,7 @@
         <button class="garden-icon" id="gardenSound" type="button" aria-label="Bật hoặc tắt nhạc"><svg viewBox="0 0 24 24"><use href="#icon-sound"/></svg></button>
         <button class="garden-icon garden-retry" id="retryGardenJoin" type="button" aria-label="Thử kết nối lại vườn hoa" hidden><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.5 8a7 7 0 0 1 12-2L20 9M4 15l2.5 3a7 7 0 0 0 12-2"/></svg></button>
       </div>
-      <button class="garden-icon garden-next" type="button" data-next="ticket" aria-label="Tiếp tục đến vé Coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+      <button class="garden-icon garden-next" type="button" data-next="ticket" aria-label="Tiếp tục đến vé Coming soon"><span>Tiếp tục</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
       <p class="sr-only" id="gardenStatus" role="status" aria-live="polite"></p>
     </section>
     <section class="screen ticket-screen" data-screen="ticket" aria-labelledby="ticketTitle" hidden>

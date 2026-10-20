@@ -1,4 +1,5 @@
 /* Current reactions, paper sound and petal effects are independent of the scrapbook skin. */
+.letter-album-return { margin:4px 4px 14px; min-height:44px; gap:8px; }
 body[data-view="door"] .paper-sound-toggle { display:none; }
 .paper-sound-toggle { position:fixed; z-index:110; right:max(16px,env(safe-area-inset-right)); bottom:max(16px,env(safe-area-inset-bottom)); display:grid; place-items:center; width:38px; height:38px; padding:9px; border:1px solid var(--line); border-radius:50%; background:var(--paper); color:var(--purple-dark); }
 .paper-sound-toggle[aria-pressed="false"] { opacity:.6; }

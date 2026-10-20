@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { turnTarget, dragIntent, dragProgress, shouldCompleteTurn } from '../src/album/page-turn.mjs';
 import { buildAlbumPages, pagePresentation } from '../src/album/album-layout.mjs';
+import { PAGE_CAPTIONS, photoPageCaption } from '../src/album/album-captions.mjs';
 
 test('page turns cannot cross either end or skip a spread', () => {
   assert.equal(turnTarget(0, -1, 24), null);
@@ -39,4 +40,20 @@ test('album grouping keeps all 43 reaction identities exactly once in 21 views',
   assert.deepEqual(pages.find(indices => indices.includes(32)), [32,33,34]);
   assert.equal(pagePresentation([32,33,34], []).kind, 'compact');
   assert.equal(pagePresentation([2,4,5], []).kind, 'trio');
+});
+
+test('the revised 21-page notes follow their photos, keep separate left/right notes and omit the requested pages', () => {
+  const pages = buildAlbumPages(Array.from({ length:43 }, () => ({})));
+  assert.deepEqual(PAGE_CAPTIONS.map(group => group.page), Array.from({ length:21 }, (_, i) => i + 1));
+  assert.deepEqual(PAGE_CAPTIONS.filter(group => !group.notes.length).map(group => group.page), [16,17,19,20]);
+  for (const [page, indices] of pages.entries()) {
+    assert.deepEqual(indices.map(photoPageCaption).filter(Boolean).map(note => ({photo:note.photo,text:note.text})), PAGE_CAPTIONS[page].notes);
+  }
+  assert.equal(photoPageCaption(27).text, 'Đi quân sự vui nhờ <3');
+  assert.equal(photoPageCaption(29).text, 'Team building đời đầu là đâyy=))');
+  assert.equal(photoPageCaption(34).text, 'Giải ba cơ đấyy?!?!');
+  assert.equal(photoPageCaption(6).text, 'Báo cáo sĩ số đủ!!');
+  assert.equal(photoPageCaption(24).text, 'To be continued….');
+  assert.equal(photoPageCaption(32), undefined);
+  assert.equal(photoPageCaption(40), undefined);
 });

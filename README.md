@@ -67,6 +67,8 @@ Loại hoa hỗ trợ: `mix`, `daisy`, `tulip`, `ranunculus`, `cosmos`, `rose`, 
 
 ## Chỉnh nội dung
 
+- Lời nhắn trên sổ: `src/album/album-captions.mjs`. Bản mới nhất theo 21 trang, bỏ tiêu đề “Sổ kỷ niệm”, dùng Mali/Inter; xem [ALBUM_CAPTIONS.md](ALBUM_CAPTIONS.md) cho danh sách và kết quả kiểm tra.
+
 - 30 lời chúc: `server/letter-catalog.mjs`, bản dễ đọc tại [NOI_DUNG_THIEP.md](NOI_DUNG_THIEP.md). Quy tắc tên gọi: `src/shared/personalization.mjs`. Chi tiết cơ chế hiện tại ở [PERSONALIZED_LETTERS.md](PERSONALIZED_LETTERS.md).
 - Màu chủ đạo: các biến trong `:root` ở `public/styles.css`.
 - Hoa riêng theo người: `public/flower-profiles.js`.
