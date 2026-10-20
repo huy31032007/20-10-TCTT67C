@@ -36,3 +36,11 @@ Vùng trồng hoa từ khoảng 40% chiều cao đến trên 91%/cách đáy ít
 43/43 tests và build pass. Đã kiểm tra 30 cụm trong trình duyệt ở sáu viewport tiêu chuẩn phía trên, thêm 768×420/560: không tràn, không cắt cụm, không đụng mũi tên. Mũi tên chỉ có icon, vùng chạm 44px. Đã mở vé bằng mũi tên, quan sát sáu bướm đang hoạt động, đọc trái tim hiện khi bướm ở vị trí đậu rồi lên cao và opacity về 0. Khi rời vườn, cả bướm/trái tim đều paused. Chưa bật reduced-motion của hệ điều hành; CSS hiện có tắt chuyển động và trái tim có opacity nền 0. Không sửa backend hoặc dữ liệu thật. Chưa commit/push/deploy.
 
 Bằng chứng cuối: `finished-1280.png`, `finished-390.png`, `finished-viewports.json`, `heart-states.json`, `larger-metrics.json` trong thư mục QA tạm. Các tệp `larger-*`, `latest-*` là bước kiểm tra trước lần làm bướm rõ hơn.
+
+## Bù hoa cho tên ngắn, giữ cụm đã đầy
+
+`public/bouquet.js` bù những tên có dưới 12 nhành chính lên tán đầy 12 nhành. Tên đã đủ 12 nhành trở lên giữ nguyên hình vẽ, loại hoa và vị trí cũ. Trong vườn, tối đa 4 nhành bù dùng vị trí điểm xuyết riêng; đây là phần bù chỗ thiếu, không cộng thêm lên cụm đã đầy. Tên rất ngắn có thêm nhành nền để đạt cùng độ dày. Những nhành theo chữ cái vẫn đứng đầu danh sách, nên thao tác gõ/phím hoa, G/R/V hoa hồng và K/L/Y hoa ly không đổi.
+
+Áp dụng ngay khi vẽ lại tên đã lưu; không ghi thêm hoa hoặc thành viên vào database. 30 tên thử trong preview vẫn cùng ID/revision/dữ liệu. Đã so sánh hình vẽ cũ/mới cho Nguyễn Thu Phương và Nguyễn Hoàng Minh Anh: giữ nguyên hình vẽ (ngoại trừ thuộc tính phân loại SVG phục vụ xác định nhành chữ/nhành bù). Đã kiểm tra tên ngắn An và phím G trên giao diện.
+
+48/48 tests và build pass; có 5 tests mới trong `tests/bouquet-density.test.mjs` cho độ dày, không thêm vào cụm đầy, phím hoa, Unicode và nhành chữ giữ nguyên. Browser kiểm tra 30 cụm tại 320×740, 360×800, 390×844, 768×1024, 1024×768, 1280×900: đủ 12 nhành mỗi cụm, không tràn/cắt cụm/giao mũi tên, console không lỗi/cảnh báo. Bằng chứng: `fullness-1280.png`, `fullness-390.png`, `fullness-viewports.json`, `fullness-counts.json`, `full-short-name.png`. Chưa commit/push/deploy; không ghi dữ liệu production.

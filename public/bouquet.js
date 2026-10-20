@@ -158,6 +158,14 @@
     const wrapped = options.wrapped !== false;
     const id = `flowers-${++serial}`;
     const positions = [[225,92,-4],[159,115,-17],[294,119,13],[108,166,-26],[340,173,24],[194,166,-8],[267,171,12],[146,220,-15],[310,228,20],[228,228,5],[187,65,-11],[267,62,9]];
+    // Short names receive the same full canopy, without changing their letter stems.
+    const baseDensity = Math.max(positions.length, letters.length);
+    const branchCount = baseDensity;
+    // Up to four garden accents fill the deficit; already-full clumps stay intact.
+    const gardenAccents = options.garden ? Math.min(4, baseDensity - letters.length) : 0;
+    const gardenStart = branchCount - gardenAccents;
+    const fillPositions = [[112,111,-22],[339,115,20],[113,218,-20],[337,219,20],[224,139,0],[169,182,-10],[285,184,12],[219,254,1],[184,66,-11],[271,65,9],[146,223,-15],[308,226,20],[195,166,-8],[265,171,12]];
+    const gardenPositions = [[169,152,-10],[284,154,10],[191,240,-7],[270,241,8]];
     let gradients = `<linearGradient id="${id}-leaf" x2="1" y2="1"><stop stop-color="#bfd0b5"/><stop offset="1" stop-color="#759c85"/></linearGradient>
       <linearGradient id="${id}-paper" x1="0" x2="1" y1="0" y2=".5"><stop stop-color="${mix(paper,255,.4)}"/><stop offset=".5" stop-color="${paper}"/><stop offset="1" stop-color="${mix(paper,255,.3)}"/></linearGradient>
       <linearGradient id="${id}-cream" x1="0" x2="1" y2="1"><stop stop-color="#fffdf4"/><stop offset="1" stop-color="#e9dfc9"/></linearGradient>
@@ -167,25 +175,28 @@
     let foliage = '', stems = '', heads = '', baby = '';
     const headDefinitions = new Map();
     const leafPositions = [[138,285,-38,.7],[322,285,40,.7],[178,238,-18,.85],[289,245,27,.8],[219,241,-1,.9],[99,273,-49,.6],[357,283,52,.6]];
-    leafPositions.slice(0, Math.min(leafPositions.length, Math.floor(letters.length / 2))).forEach((point,i) => { foliage += eucalyptus(...point,id,i); });
-    [[120,240,-24],[341,256,26],[176,157,-13],[290,188,18],[220,210,-4],[98,280,-52]].slice(0,Math.floor(letters.length/3)).forEach(([x,y,a],i) => { baby += fillers(x,y,a,i%3?'#fffdf5':'#e4d4ef',i); });
-    letters.forEach((letter,i) => {
+    leafPositions.slice(0, Math.floor(branchCount / 2)).forEach((point,i) => { foliage += eucalyptus(...point,id,i); });
+    [[120,240,-24],[341,256,26],[176,157,-13],[290,188,18],[220,210,-4],[98,280,-52]].slice(0,Math.floor(branchCount/3)).forEach(([x,y,a],i) => { baby += fillers(x,y,a,i%3?'#fffdf5':'#e4d4ef',i); });
+    Array.from({length:branchCount},(_,i) => letters[i]).forEach((letter,i) => {
       // Prefix-derived stems stay in place as the next letter is added.
       // Full-name-derived paper and ribbon give every recipient a separate identity.
-      const branchSeed = hashName(letters.slice(0,i+1).join(''));
-      let [x,y,angle] = positions[i] || [225 + Math.cos(i*2.39996)*108,165 + Math.sin(i*2.39996)*82,Math.cos(i)*16];
+      const source = letter ? 'letter' : i < gardenStart ? 'fill' : 'garden';
+      const branchSeed = hashName(letter ? letters.slice(0,i+1).join('') : `${canonical}|${source}|${i}`);
+      let [x,y,angle] = source === 'letter'
+        ? positions[i] || [225 + Math.cos(i*2.39996)*108,165 + Math.sin(i*2.39996)*82,Math.cos(i)*16]
+        : source === 'garden' ? gardenPositions[i - gardenStart] : fillPositions[(i - letters.length) % fillPositions.length];
       x += (branchSeed % 23)-11;
       y += ((branchSeed >>> 6)%21)-10;
       angle += ((branchSeed >>> 12)%17)-8;
       const tone = (branchSeed >>> 4) % colors.length;
       const family = families[theme.family];
-      const kind = selectedKind ?? letterKind(letter) ?? family[branchSeed % 5 < 3 ? 0 : 1 + (branchSeed >>> 7) % 2];
+      const kind = selectedKind ?? (letter ? letterKind(letter) : undefined) ?? family[branchSeed % 5 < 3 ? 0 : 1 + (branchSeed >>> 7) % 2];
       const scale = .72 + (branchSeed % 5)*.045;
       const baseY = wrapped ? 375 : 455;
       const baseX = 224 + (i % 5) * 3;
       stems += `<path class="bouquet-stem" d="M${baseX} ${baseY+(i%3)*3}Q${x*.52+108} ${y+(baseY-y)*.65} ${x} ${y+8}" stroke="${i%2?'#87a97c':'#729675'}" stroke-width="1.7" fill="none"/>
         <path d="M${x*.45+122} ${y+125}q-26-3-23-27q25 4 23 27m2-20q26-2 26-27q-24 3-26 27" fill="#9db889" opacity=".8"/>`;
-      const animate = options.animateFrom === undefined || i >= options.animateFrom;
+      const animate = options.animateFrom === undefined || (source === 'letter' && i >= options.animateFrom);
       const shapeKey = `${kind}-${tone}`;
       let definition = headDefinitions.get(shapeKey);
       if (!definition) {
@@ -195,7 +206,7 @@
       }
       const petals = `<use href="#${definition}"/>`;
       const buds = `<g transform="translate(-21 24) scale(.37)">${petals}</g><g transform="translate(22 16) scale(.3)">${petals}</g><path d="M-21 25Q-7 32 0 37M22 17Q8 25 0 37" stroke="#91aa7f" stroke-width="1" fill="none"/>`;
-      heads += `<g class="bouquet-flower" data-flower="${kind}-${tone}-${branchSeed.toString(16)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${angle.toFixed(1)}) scale(${scale})"><g class="floral-sway" style="--sway-delay:${i*-.37}s"><g class="${animate?'floral-bloom':''}" style="--bloom-delay:${animate&&options.animateFrom!==undefined?'.25':'0'}s">${buds}${petals}</g></g></g>`;
+      heads += `<g class="bouquet-flower" data-bloom-source="${source}" data-flower="${kind}-${tone}-${branchSeed.toString(16)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${angle.toFixed(1)}) scale(${scale})"><g class="floral-sway" style="--sway-delay:${i*-.37}s"><g class="${animate?'floral-bloom':''}" style="--bloom-delay:${animate&&options.animateFrom!==undefined?'.25':'0'}s">${buds}${petals}</g></g></g>`;
     });
     const backPaper = wrapped ? `<g class="paper-unfold"><path d="M79 240Q116 213 147 235L225 394 164 335Z" fill="url(#${id}-cream)" stroke="#dcd0b8" stroke-width=".8"/><path d="M373 242Q340 212 308 233L228 399 291 332Z" fill="url(#${id}-cream)" stroke="#dcd0b8" stroke-width=".8"/><path d="M105 259 159 209 225 227 291 208 351 258 231 420Z" fill="${mix(paper,255,.45)}" opacity=".85"/></g>` : '';
     const frontPaper = wrapped ? `<g class="paper-unfold">
